@@ -15,11 +15,7 @@
       "source": "./",
       "strict": false,
       "skills": [
-        {
-          "name": "publish",
-          "description": "Publish static HTML, ZIP archive, or directory to Vibe Hub. Use when user wants to publish/deploy web content.",
-          "path": "skills/publish/SKILL.md"
-        }
+        "./skills/vibe-hub-publish"
       ]
     }
   ]
