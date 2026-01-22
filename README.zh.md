@@ -71,11 +71,13 @@ npx add-skill blocklet/vibe-hub-skills
 
 也可以使用自然语言：
 
-> 把这个项目发布到 Vibe Hub
+```bash
+/vibe-hub:publish 把这个项目发布到 Vibe Hub
 
-> 帮我把 dist 目录发布到 Vibe Hub
+/vibe-hub:publish 帮我把 dist 目录发布上去
 
-> 部署我的网站到 myvibe.so
+/vibe-hub:publish 部署我的网站到 myvibe.so
+```
 
 **选项：**
 

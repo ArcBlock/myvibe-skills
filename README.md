@@ -71,11 +71,13 @@ Publish web content (HTML file, ZIP archive, or directory) to Vibe Hub.
 
 You can also use natural language:
 
-> Publish this project to Vibe Hub
+```bash
+/vibe-hub:publish Publish this project to Vibe Hub
 
-> Help me publish the dist folder to Vibe Hub
+/vibe-hub:publish Help me publish the dist folder
 
-> Deploy my website to myvibe.so
+/vibe-hub:publish Deploy my website to myvibe.so
+```
 
 **Options:**
 
