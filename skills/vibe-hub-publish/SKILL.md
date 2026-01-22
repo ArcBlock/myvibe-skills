@@ -143,7 +143,7 @@ Options:
   - Label: "Build & Publish"
     Description: "Run build, then publish [output_dir]/"
   - Label: "Publish Source"
-    Description: "Skip build, publish as-is (server will process)"
+    Description: "Skip build, publish source as-is"
 ```
 
 #### Execute Build (if confirmed)
@@ -203,10 +203,29 @@ If user selects "Edit details" or "Other", use follow-up `AskUserQuestion` to co
 
 Only after user confirmation, execute the publish script:
 
-```bash
-# Install dependencies if needed
-cd skills/vibe-hub-publish/scripts && npm install
+**Dependency Check Strategy:**
+1. Check if `skills/vibe-hub-publish/scripts/node_modules` directory exists
+2. If exists: skip `npm install`, run publish directly
+3. If publish fails with module errors: run `npm install` and retry
+4. If `node_modules` doesn't exist: run `npm install` first
 
+```bash
+# Check if dependencies installed (node_modules exists)
+# If YES: run publish directly
+node skills/vibe-hub-publish/scripts/publish.mjs ...
+
+# If publish fails with "Cannot find module" or similar error:
+cd skills/vibe-hub-publish/scripts && npm install
+# Then retry publish
+
+# If node_modules doesn't exist: install first
+cd skills/vibe-hub-publish/scripts && npm install
+node skills/vibe-hub-publish/scripts/publish.mjs ...
+```
+
+**Examples:**
+
+```bash
 # Publish a ZIP file
 node skills/vibe-hub-publish/scripts/publish.mjs \
   --file ./dist.zip \

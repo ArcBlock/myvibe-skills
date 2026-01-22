@@ -18,7 +18,7 @@ export const API_PATHS = {
   // Get vibe info
   VIBE_INFO: (did) => `/api/vibes/${did}`,
   // Create vibe from URL
-  VIBES: "/api/vibes",
+  VIBES_FROM_URL: "/api/vibes/from-url",
 };
 
 // Well-known service path for authorization

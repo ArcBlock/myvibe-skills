@@ -3,3 +3,5 @@ node_modules/
 .vscode/
 
 CLAUDE.md
+
+.DS_Store

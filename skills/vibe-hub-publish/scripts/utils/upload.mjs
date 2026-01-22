@@ -181,7 +181,7 @@ async function readFileAsBuffer(filePath) {
  */
 export async function createVibeFromUrl(url, hubUrl, accessToken, metadata = {}) {
   const { origin } = new URL(hubUrl);
-  const apiUrl = joinURL(origin, API_PATHS.VIBES);
+  const apiUrl = joinURL(origin, API_PATHS.VIBES_FROM_URL);
 
   console.log(chalk.cyan(`\nImporting URL: ${url}`));
 
@@ -193,9 +193,6 @@ export async function createVibeFromUrl(url, hubUrl, accessToken, metadata = {})
     },
     body: JSON.stringify({
       url,
-      title: metadata.title || "",
-      description: metadata.description || "",
-      visibility: metadata.visibility || "public",
     }),
   });
 
@@ -214,12 +211,17 @@ export async function createVibeFromUrl(url, hubUrl, accessToken, metadata = {})
   }
 
   const result = await response.json();
+  const blocklet = result.blocklet;
 
-  console.log(chalk.green(`✅ Vibe created! DID: ${result.did}`));
+  if (!blocklet || !blocklet.did) {
+    throw new Error("No blocklet info in response");
+  }
+
+  console.log(chalk.green(`✅ Vibe created! DID: ${blocklet.did}`));
 
   return {
-    did: result.did,
-    id: result.id,
-    vibeStatus: result.vibeStatus,
+    did: blocklet.did,
+    id: blocklet.id,
+    status: blocklet.status,
   };
 }
