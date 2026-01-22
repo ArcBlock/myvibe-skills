@@ -11,18 +11,19 @@ Enhance the `vibe-hub-publish` skill to intelligently detect whether a project n
 | Type | Detection Criteria | Action |
 |------|-------------------|--------|
 | **Static** | Has `index.html` at root, no `package.json` | Publish directly |
-| **Pre-built** | Has `dist/`, `build/`, or `out/` with `index.html` | Publish the output folder |
+| **Pre-built** | Has `dist/`, `build/`, or `out/` with `index.html` | Confirm: rebuild or use existing |
 | **Buildable** | Has `package.json` with `build` script, no output folder | Confirm with user, then build |
 | **Monorepo** | Multiple `package.json` files, workspace config | Ask user which app to build |
 | **Unknown** | Cannot determine project type | Publish as-is, let server handle |
 
 ### Detection Priority
 
-1. Check for explicit user path (`--dir` or `--file`) → trust user, publish directly
-2. Check for existing build output → use it
-3. Check for `package.json` with build script → offer to build
-4. Check for root `index.html` → static site
-5. Otherwise → unknown, publish as-is
+1. If `--file` specified → publish file directly (no detection needed)
+2. Determine target directory (`--dir` or current directory)
+3. Check for existing build output → use it
+4. Check for `package.json` with build script → offer to build
+5. Check for root `index.html` → static site
+6. Otherwise → unknown, publish as-is
 
 ### Build Configuration Detection
 
@@ -51,6 +52,7 @@ Enhance the `vibe-hub-publish` skill to intelligently detect whether a project n
 ### User Interaction Rules
 
 **Always Confirm:**
+- When pre-built output found (rebuild or use existing)
 - Before executing a build command
 - When monorepo detected (which app to build)
 
@@ -60,13 +62,27 @@ Enhance the `vibe-hub-publish` skill to intelligently detect whether a project n
 
 **No Interaction Needed:**
 - Static site → publish directly
-- Pre-built output exists → publish directly
-- User specified explicit path → publish directly
+- `--file` specified → publish file directly
 - Unknown project type → publish directly
 
 ### Build Confirmation Dialog
 
-When a buildable project is detected:
+**For Pre-built projects** (existing build output found):
+
+```
+Project Analysis:
+- Type: Vite + React project
+- Package Manager: pnpm
+- Build Command: pnpm run build
+- Output Directory: dist
+
+Found existing build output in dist/. Rebuild to ensure latest?
+  [Rebuild & Publish] - Run build again, then publish dist/
+  [Use Existing] - Publish existing dist/ without rebuilding
+  [Publish Source] - Skip output folder, publish source as-is
+```
+
+**For Buildable projects** (no build output):
 
 ```
 Project Analysis:
@@ -86,10 +102,6 @@ Proceed with build before publishing?
 - Analyze error output
 - Offer to help fix common issues (missing dependencies, config errors)
 - User can choose to fix and retry, or publish source as-is
-
-**Ambiguous Build Output:**
-- If config says `dist` but `build` folder also exists
-- Rebuild to ensure correct output
 
 **Uncertainty:**
 - When analysis is uncertain, be conservative
@@ -137,5 +149,6 @@ Monorepo detected. Which app would you like to publish?
 
 - Local analysis is preprocessing only; server has its own build pipeline
 - Be conservative: if unsure, publish as-is
-- Trust explicit user input (`--dir`, `--file`)
+- `--dir` specifies target directory but still needs project type analysis
+- `--file` publishes directly without analysis
 - Build detection should not block publishing

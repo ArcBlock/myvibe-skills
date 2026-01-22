@@ -40,33 +40,142 @@ Publish web content (HTML file, ZIP archive, or directory) to Vibe Hub.
 
 ## Workflow
 
-### 1. Analyze Content
+### 1. Analyze Content & Detect Project Type
 
-Before publishing, analyze the content to extract meaningful metadata:
+Determine the target directory to analyze:
+- If `--dir` specified: analyze that directory
+- If `--file` specified: skip to Step 3 (publish file directly)
+- Otherwise: analyze current working directory
+
+#### Project Type Detection (in priority order)
+
+| Check | Project Type | Action |
+|-------|-------------|--------|
+| Has `dist/index.html`, `build/index.html`, or `out/index.html` | **Pre-built** | Go to Step 2 (confirm rebuild or use existing) |
+| Has `package.json` with `build` script, no output folder | **Buildable** | Go to Step 2 (Build Decision) |
+| Has multiple `package.json` files or workspace config | **Monorepo** | Ask user which app to build |
+| Has `index.html` at root, no `package.json` | **Static** | Publish directly |
+| Cannot determine | **Unknown** | Publish as-is, let server handle |
+
+#### Metadata Extraction
+
+Extract metadata from available sources:
 
 **For HTML files:**
-- Read the file using Read tool
 - Extract `<title>` tag content
 - Extract `<meta name="description">` content
 - Extract `<meta property="og:title">` and `<meta property="og:description">`
 - Look at `<h1>` tags for main heading
-- Analyze page content to understand the purpose
 
-**For directories/ZIP:**
+**For directories:**
 - Read `index.html` and analyze as above
 - Read `package.json` for `name` and `description` fields
 - Read `README.md` for project title and introduction
-- Read `manifest.json` for PWA app information
-- Analyze file structure to determine project type (game, tool, landing page, etc.)
 
 **For URL import:**
 - Fetch page and extract `<title>`, meta description
 - Extract Open Graph tags
-- Analyze page content
 
-### 2. Confirm with User
+### 2. Build Decision (for Pre-built/Buildable/Monorepo projects)
 
-After analysis, present the extracted/generated information to the user:
+#### Detect Build Configuration
+
+**Package Manager** (from lock files):
+
+| Lock File | Package Manager |
+|-----------|-----------------|
+| `pnpm-lock.yaml` | pnpm |
+| `yarn.lock` | yarn |
+| `bun.lockb` or `bun.lock` | bun |
+| `package-lock.json` | npm |
+| None | npm (default) |
+
+**Build Command** (from `package.json` scripts):
+- Priority: `build:prod` > `build:production` > `build`
+
+**Output Directory** (from config files):
+
+| Config File | Expected Output |
+|-------------|-----------------|
+| `vite.config.*` | `dist` |
+| `next.config.*` | `.next` or `out` |
+| `webpack.config.*` | `dist` |
+| `astro.config.*` | `dist` |
+| `nuxt.config.*` | `.output` |
+| None recognized | Check `dist`, `build`, `out` in order |
+
+#### Show Analysis & Confirm Build
+
+Present the analysis to user:
+
+```
+Project Analysis:
+- Type: [framework] project
+- Package Manager: [pm]
+- Build Command: [pm] run build
+- Output Directory: [dir]
+
+Warnings (if any):
+- Missing .env file (.env.example exists)
+- Large files detected (> 10MB)
+```
+
+**For Pre-built projects** (existing build output found), use `AskUserQuestion`:
+
+```
+Question: "Found existing build output in [dir]/. Rebuild to ensure latest?"
+Header: "Build"
+Options:
+  - Label: "Rebuild & Publish"
+    Description: "Run build again, then publish [dir]/"
+  - Label: "Use Existing"
+    Description: "Publish existing [dir]/ without rebuilding"
+  - Label: "Publish Source"
+    Description: "Skip output folder, publish source as-is"
+```
+
+**For Buildable projects** (no build output), use `AskUserQuestion`:
+
+```
+Question: "Proceed with build before publishing?"
+Header: "Build"
+Options:
+  - Label: "Build & Publish"
+    Description: "Run build, then publish [output_dir]/"
+  - Label: "Publish Source"
+    Description: "Skip build, publish as-is (server will process)"
+```
+
+#### Execute Build (if confirmed)
+
+```bash
+cd [project_dir] && [pm] install && [pm] run build
+```
+
+**On build failure:**
+- Analyze error output
+- Offer to help fix common issues (missing dependencies, config errors)
+- User can choose to fix and retry, or publish source as-is
+
+#### Monorepo Handling
+
+When multiple `package.json` files detected, use `AskUserQuestion`:
+
+```
+Question: "Monorepo detected. Which app would you like to publish?"
+Header: "App"
+Options:
+  - Label: "[apps/web]"
+    Description: "[framework] detected in apps/web"
+  - Label: "[apps/admin]"
+    Description: "[framework] detected in apps/admin"
+  - Label: "Other"
+    Description: "Specify a different path"
+```
+
+### 3. Confirm Publish
+
+Present the extracted/generated information to the user:
 
 ```
 Publishing to Vibe Hub:
@@ -76,7 +185,7 @@ Publishing to Vibe Hub:
 - Source: [file path / directory / URL]
 ```
 
-Then use `AskUserQuestion` tool to confirm:
+Use `AskUserQuestion` to confirm:
 
 ```
 Question: "Confirm publish to Vibe Hub?"
@@ -90,16 +199,16 @@ Options:
 
 If user selects "Edit details" or "Other", use follow-up `AskUserQuestion` to collect corrections.
 
-### 3. Execute Publish
+### 4. Execute Publish
 
 Only after user confirmation, execute the publish script:
 
 ```bash
 # Install dependencies if needed
-cd skills/publish/scripts && npm install
+cd skills/vibe-hub-publish/scripts && npm install
 
 # Publish a ZIP file
-node skills/publish/scripts/publish.mjs \
+node skills/vibe-hub-publish/scripts/publish.mjs \
   --file ./dist.zip \
   --hub https://staging.myvibe.so \
   --title "My App" \
@@ -107,7 +216,7 @@ node skills/publish/scripts/publish.mjs \
   --visibility public
 
 # Publish a directory (auto-zipped)
-node skills/publish/scripts/publish.mjs \
+node skills/vibe-hub-publish/scripts/publish.mjs \
   --dir ./dist \
   --hub https://staging.myvibe.so \
   --title "My App" \
@@ -115,7 +224,7 @@ node skills/publish/scripts/publish.mjs \
   --visibility public
 
 # Publish a single HTML file
-node skills/publish/scripts/publish.mjs \
+node skills/vibe-hub-publish/scripts/publish.mjs \
   --file ./index.html \
   --hub https://staging.myvibe.so \
   --title "My App" \
@@ -123,7 +232,7 @@ node skills/publish/scripts/publish.mjs \
   --visibility public
 
 # Import and publish from URL
-node skills/publish/scripts/publish.mjs \
+node skills/vibe-hub-publish/scripts/publish.mjs \
   --url https://example.com/my-app \
   --hub https://staging.myvibe.so \
   --title "My App" \
@@ -141,7 +250,7 @@ URL: https://staging.myvibe.so/p/{projectId}
 
 The URL format is `{hub}/p/{projectId}`, where `projectId` is generated by Vibe Hub.
 
-### 4. Return Result
+### 5. Return Result
 
 - On success: Show the published URL to the user
 - On failure: Show the error message and suggest solutions
@@ -155,6 +264,9 @@ The URL format is `{hub}/p/{projectId}`, where `projectId` is generated by Vibe 
 | Upload failed | Show error message, suggest checking file format |
 | Conversion failed | Show conversion error from API |
 | Network error | Suggest retry |
+| Build failed | Analyze error, offer to help fix, or publish source as-is |
+| Missing dependencies | Run `[pm] install` first |
+| Config error | Check framework config files |
 
 ## Authorization
 
@@ -169,3 +281,8 @@ The script handles authorization automatically:
 - Never use directory names as title - they are often meaningless
 - Confirm with user before executing publish
 - Default hub is https://staging.myvibe.so/
+- Local build detection is preprocessing only; server has its own build pipeline
+- Be conservative: if project type is uncertain, publish as-is and let server handle
+- `--dir` specifies target directory but still needs project type analysis
+- `--file` publishes the file directly without analysis
+- Build detection should not block publishing
