@@ -1,0 +1,26 @@
+{
+  "name": "vibe-hub-skills",
+  "owner": {
+    "name": "ArcBlock",
+    "email": "contact@arcblock.io"
+  },
+  "metadata": {
+    "description": "Vibe Hub Skills - AI-powered web page creation and VibeHub publishing capabilities, supporting static pages, Vite, Next.js and more",
+    "version": "0.0.1"
+  },
+  "plugins": [
+    {
+      "name": "vibe-hub",
+      "description": "Web page creation and VibeHub publishing skills, works with Vibe Hub to generate and deploy various web project types",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        {
+          "name": "publish",
+          "description": "Publish static HTML, ZIP archive, or directory to Vibe Hub. Use when user wants to publish/deploy web content.",
+          "path": "skills/publish/SKILL.md"
+        }
+      ]
+    }
+  ]
+}
