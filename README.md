@@ -1,82 +1,102 @@
 # Vibe Hub Skills
 
-Claude Code plugin for [Vibe Hub](https://github.com/blocklet/vibe-hub), providing AI-powered web page creation and VibeHub publishing capabilities.
+English | [中文](./README.zh.md)
 
-## Features
+Claude Code Skills for publishing web content to [Vibe Hub](https://github.com/blocklet/vibe-hub).
 
-- **Multi-type Web Page Generation** - Support for static pages, Vite, Next.js and more
-- **One-click Publish to VibeHub** - Quickly convert generated projects to Blocklets and deploy
-- **Smart Project Configuration** - Auto-generate `package.json`, build configs and required files
+## Prerequisites
 
-## Supported Project Types
-
-| Type | Description |
-|------|-------------|
-| Static Webapp | HTML/CSS/JS static pages |
-| Vite | Vite-powered modern web applications |
-| Next.js | Next.js full-stack applications |
-| React | Create React App projects |
+- [Claude Code](https://claude.com/claude-code) installed
 
 ## Installation
 
-Add this plugin to your Claude Code configuration.
+### Quick Install (Recommended)
+
+```bash
+npx add-skill ArcBlock/vibe-hub-skills
+```
+
+### Register as Plugin Marketplace
+
+Run the following command in Claude Code:
+
+```bash
+/plugin marketplace add ArcBlock/vibe-hub-skills
+```
+
+### Install Skills
+
+**Option 1: Via Browse UI**
+
+1. Select **Browse and install plugins**
+2. Select **vibe-hub-skills**
+3. Select the plugin(s) you want to install
+4. Select **Install now**
+
+**Option 2: Direct Install**
+
+```bash
+# Install specific plugin
+/plugin install vibe-hub@vibe-hub-skills
+```
+
+**Option 3: Ask the Agent**
+
+Simply tell Claude Code:
+
+> Please install Skills from github.com/ArcBlock/vibe-hub-skills
 
 ## Usage
 
+### Publish Command
+
+Publish web content (HTML file, ZIP archive, or directory) to Vibe Hub.
+
 ```bash
-# Create a new Vibe project
-/vibe-hub:create
-
-# Publish to VibeHub
+# Publish current directory (auto-detect project type)
 /vibe-hub:publish
+
+# Publish a specific directory
+/vibe-hub:publish --dir ./dist
+
+# Publish a ZIP file
+/vibe-hub:publish --file ./dist.zip
+
+# Publish a single HTML file
+/vibe-hub:publish --file ./index.html
+
+# Import and publish from URL
+/vibe-hub:publish --url https://example.com/my-app
 ```
 
-## Directory Structure
+**Options:**
 
-```
-vibe-hub-skills/
-├── .claude/                    # Claude Code settings
-│   └── settings.local.json
-├── .claude-plugin/             # Plugin configuration
-│   └── marketplace.json
-├── agents/                     # Sub-agent definitions
-│   └── *.md
-├── commands/                   # Slash commands
-│   └── *.md
-├── skills/                     # Skill implementations
-│   └── <skill-name>/
-│       ├── SKILL.md
-│       └── references/
-├── docs/                       # Documentation
-└── README.md
-```
+| Option | Alias | Description |
+|--------|-------|-------------|
+| `--file <path>` | `-f` | Path to HTML file or ZIP archive |
+| `--dir <path>` | `-d` | Directory to publish |
+| `--url <url>` | `-u` | URL to import and publish |
+| `--hub <url>` | `-h` | Vibe Hub URL (default: https://staging.myvibe.so/) |
+| `--title <title>` | `-t` | Project title |
+| `--desc <desc>` | | Project description |
+| `--visibility <vis>` | `-v` | Visibility: public or private (default: public) |
 
-## Components
+**Features:**
 
-### Skills
-
-Skills are the main building blocks. Each skill contains:
-- `SKILL.md` - Skill definition with frontmatter and instructions
-- `references/` - Optional directory for reference files
-
-### Commands
-
-Commands provide quick access via slash commands (e.g., `/vibe-hub:create`).
-
-### Agents
-
-Sub-agents can be invoked by skills to handle specific subtasks.
-
-## Development
-
-1. Add new skills in `skills/<skill-name>/SKILL.md`
-2. Add commands in `commands/<command-name>.md`
-3. Add agents in `agents/<agent-name>.md`
-4. Register new skills in `marketplace.json`
+- Auto-detect project type (Static, Pre-built, Buildable, Monorepo)
+- Smart build detection with user confirmation
+- Extract metadata from HTML, package.json, README
+- Support multiple package managers (npm, pnpm, yarn, bun)
 
 ## Related Projects
 
-- [Vibe Hub](https://github.com/blocklet/vibe-hub) - AI-powered web project to Blocklet converter
+- [Vibe Hub](https://github.com/blocklet/vibe-hub) - AI-powered web project hosting platform
+
+## Author
+
+**ArcBlock** - [blocklet@arcblock.io](mailto:blocklet@arcblock.io)
+
+GitHub: [@ArcBlock](https://github.com/ArcBlock)
 
 ## License
 
