@@ -13,7 +13,7 @@
 ### 快速安装（推荐）
 
 ```bash
-npx add-skill ArcBlock/vibe-hub-skills
+npx add-skill blocklet/vibe-hub-skills
 ```
 
 ### 注册为插件市场
@@ -21,7 +21,7 @@ npx add-skill ArcBlock/vibe-hub-skills
 在 Claude Code 中运行以下命令：
 
 ```bash
-/plugin marketplace add ArcBlock/vibe-hub-skills
+/plugin marketplace add blocklet/vibe-hub-skills
 ```
 
 ### 安装 Skills
@@ -44,7 +44,7 @@ npx add-skill ArcBlock/vibe-hub-skills
 
 直接告诉 Claude Code：
 
-> 请从 github.com/ArcBlock/vibe-hub-skills 安装 Skills
+> 请从 github.com/blocklet/vibe-hub-skills 安装 Skills
 
 ## 使用方法
 
@@ -68,6 +68,14 @@ npx add-skill ArcBlock/vibe-hub-skills
 # 从 URL 导入并发布
 /vibe-hub:publish --url https://example.com/my-app
 ```
+
+也可以使用自然语言：
+
+> 把这个项目发布到 Vibe Hub
+
+> 帮我把 dist 目录发布到 Vibe Hub
+
+> 部署我的网站到 myvibe.so
 
 **选项：**
 

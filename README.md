@@ -13,7 +13,7 @@ Claude Code Skills for publishing web content to [Vibe Hub](https://github.com/b
 ### Quick Install (Recommended)
 
 ```bash
-npx add-skill ArcBlock/vibe-hub-skills
+npx add-skill blocklet/vibe-hub-skills
 ```
 
 ### Register as Plugin Marketplace
@@ -21,7 +21,7 @@ npx add-skill ArcBlock/vibe-hub-skills
 Run the following command in Claude Code:
 
 ```bash
-/plugin marketplace add ArcBlock/vibe-hub-skills
+/plugin marketplace add blocklet/vibe-hub-skills
 ```
 
 ### Install Skills
@@ -44,7 +44,7 @@ Run the following command in Claude Code:
 
 Simply tell Claude Code:
 
-> Please install Skills from github.com/ArcBlock/vibe-hub-skills
+> Please install Skills from github.com/blocklet/vibe-hub-skills
 
 ## Usage
 
@@ -68,6 +68,14 @@ Publish web content (HTML file, ZIP archive, or directory) to Vibe Hub.
 # Import and publish from URL
 /vibe-hub:publish --url https://example.com/my-app
 ```
+
+You can also use natural language:
+
+> Publish this project to Vibe Hub
+
+> Help me publish the dist folder to Vibe Hub
+
+> Deploy my website to myvibe.so
 
 **Options:**
 
