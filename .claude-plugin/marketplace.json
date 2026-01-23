@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Vibe Hub Skills - AI-powered web page creation and VibeHub publishing capabilities, supporting static pages, Vite, Next.js and more",
-    "version": "0.0.2"
+    "version": "0.0.3"
   },
   "plugins": [
     {

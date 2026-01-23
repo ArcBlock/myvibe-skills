@@ -160,22 +160,14 @@ async function publish(options) {
       const vibeInfoUrl = joinURL(origin, API_PATHS.VIBE_INFO(did));
       const vibeInfo = await apiGet(vibeInfoUrl, accessToken, hub);
 
-      // Build edit URL: /{userDid}/{did}
-      const editUrl = joinURL(hub, vibeInfo.userDid, did);
-      console.log(chalk.cyan(`📝 Edit your vibe at: ${editUrl}`));
-
-      // Preview URL is stored in vibe.url field
-      if (vibeInfo.url) {
-        console.log(chalk.cyan(`🔗 Preview at: ${vibeInfo.url}`));
-      }
-
-      console.log("");
+      // Build vibe URL: /{userDid}/{did}
+      const vibeUrl = joinURL(hub, vibeInfo.userDid, did);
+      console.log(chalk.cyan(`🔗 ${vibeUrl}\n`));
 
       return {
         success: true,
         did,
-        editUrl,
-        previewUrl: vibeInfo.url || null,
+        url: vibeUrl,
       };
     } else {
       throw new Error(actionResult.error || "Publish action failed");
