@@ -40,14 +40,17 @@ export async function uploadFile(filePath, hubUrl, accessToken) {
 
   console.log(chalk.cyan(`\nUploading: ${fileName} (${(fileSize / 1024).toFixed(2)} KB)`));
 
+  // Use random hash prefix to avoid filename collision
+  const uniqueFileName = `${fileHash.slice(0, 8)}-${fileName}`;
+
   // TUS metadata
   const tusMetadata = {
     uploaderId,
-    relativePath: fileName,
-    name: fileName,
+    relativePath: uniqueFileName,
+    name: uniqueFileName,
     type: mimeType,
     filetype: mimeType,
-    filename: fileName,
+    filename: uniqueFileName,
   };
 
   const encodedMetadata = Object.entries(tusMetadata)
@@ -64,15 +67,15 @@ export async function uploadFile(filePath, hubUrl, accessToken) {
       "Upload-Length": fileSize.toString(),
       "Upload-Metadata": encodedMetadata,
       Authorization: `Bearer ${accessToken}`,
-      "x-uploader-file-name": fileName,
+      "x-uploader-file-name": uniqueFileName,
       "x-uploader-file-id": fileId,
       "x-uploader-file-ext": fileExt,
       "x-uploader-base-url": endpointPath,
       "x-uploader-endpoint-url": uploadEndpoint,
       "x-uploader-metadata": JSON.stringify({
         uploaderId,
-        relativePath: fileName,
-        name: fileName,
+        relativePath: uniqueFileName,
+        name: uniqueFileName,
         type: mimeType,
       }),
     },
@@ -90,6 +93,7 @@ export async function uploadFile(filePath, hubUrl, accessToken) {
   if (!uploadUrl) {
     throw new Error("No upload URL received from server");
   }
+  console.log(chalk.gray(`  Upload URL: ${uploadUrl}`));
 
   console.log(chalk.gray("  Upload created, sending file data..."));
 
@@ -103,15 +107,15 @@ export async function uploadFile(filePath, hubUrl, accessToken) {
       "Upload-Offset": "0",
       "Content-Type": "application/offset+octet-stream",
       Authorization: `Bearer ${accessToken}`,
-      "x-uploader-file-name": fileName,
+      "x-uploader-file-name": uniqueFileName,
       "x-uploader-file-id": fileId,
       "x-uploader-file-ext": fileExt,
       "x-uploader-base-url": endpointPath,
       "x-uploader-endpoint-url": uploadEndpoint,
       "x-uploader-metadata": JSON.stringify({
         uploaderId,
-        relativePath: fileName,
-        name: fileName,
+        relativePath: uniqueFileName,
+        name: uniqueFileName,
         type: mimeType,
       }),
       "x-uploader-file-exist": "true",

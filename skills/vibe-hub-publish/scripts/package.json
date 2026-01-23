@@ -1,6 +1,6 @@
 {
   "name": "vibe-hub-publish-scripts",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "Scripts for publishing to Vibe Hub",
   "main": "publish.mjs",
