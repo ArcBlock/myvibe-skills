@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
-import { existsSync } from "node:fs";
+import { existsSync, realpathSync } from "node:fs";
 import { stat } from "node:fs/promises";
 import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import chalk from "chalk";
 import { joinURL } from "ufo";
 
@@ -275,8 +276,23 @@ ${chalk.bold("Examples:")}
 `);
 }
 
+/**
+ * Check if this module is the main entry point
+ * Handles symlinks by comparing real paths
+ */
+function isMainModule() {
+  try {
+    const scriptPath = fileURLToPath(import.meta.url);
+    const argvPath = resolve(process.argv[1]);
+    // Compare real paths to handle symlinks
+    return realpathSync(scriptPath) === realpathSync(argvPath);
+  } catch {
+    return false;
+  }
+}
+
 // CLI entry point
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isMainModule()) {
   const args = process.argv.slice(2);
 
   if (args.length === 0) {
