@@ -33,7 +33,7 @@
 ### 2.1 文件结构
 
 - **SKILL.md**: 保持简洁，描述整体工作流
-- **metadata-analysis.md**: 参考文件，详细描述各字段的分析规则
+- **references/metadata-analysis.md**: 参考文件，详细描述各字段的分析规则
 - **scripts/publish.mjs**: 扩展支持 `--config` 参数
 - **scripts/utils/upload-image.mjs**: 图片上传工具（TUS 协议）
 
@@ -164,7 +164,7 @@ GET /api/tags?type=category&isActive=true
 
 ## 4. 新增/修改文件
 
-### 4.1 skills/myvibe-publish/metadata-analysis.md
+### 4.1 skills/myvibe-publish/references/metadata-analysis.md
 
 参考文件，详细描述：
 - 各字段的分析规则和优先级
@@ -190,7 +190,7 @@ GET /api/tags?type=category&isActive=true
 
 ## 5. SKILL.md 更新要点
 
-1. 引入 `metadata-analysis.md` 作为参考文件
+1. 引入 `references/metadata-analysis.md` 作为参考文件
 2. 更新 Workflow，增加 AI 分析和截图步骤
 3. 用户确认时展示完整元数据
 4. 使用 JSON 配置文件传参
@@ -200,7 +200,7 @@ GET /api/tags?type=category&isActive=true
 ## 6. 实现计划
 
 ### Phase 1: 基础框架
-- [ ] 创建 `metadata-analysis.md` 参考文件
+- [ ] 创建 `references/metadata-analysis.md` 参考文件
 - [ ] 更新 `publish.mjs` 支持 `--config` 参数
 - [ ] 实现 `upload-image.mjs` 图片上传脚本
 
