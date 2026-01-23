@@ -1,21 +1,21 @@
 {
-  "name": "vibe-hub-skills",
+  "name": "my-vibe-skills",
   "owner": {
     "name": "ArcBlock",
     "email": "contact@arcblock.io"
   },
   "metadata": {
-    "description": "Vibe Hub Skills - AI-powered web page creation and VibeHub publishing capabilities, supporting static pages, Vite, Next.js and more",
-    "version": "0.0.4"
+    "description": "MyVibe Skills - AI-powered web page creation and MyVibe publishing capabilities, supporting static pages, Vite, Next.js and more",
+    "version": "0.0.5"
   },
   "plugins": [
     {
-      "name": "vibe-hub",
-      "description": "Web page creation and VibeHub publishing skills, works with Vibe Hub to generate and deploy various web project types",
+      "name": "my-vibe",
+      "description": "Web page creation and MyVibe publishing skills, works with MyVibe to generate and deploy various web project types",
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/vibe-hub-publish"
+        "./skills/my-vibe-publish"
       ]
     }
   ]

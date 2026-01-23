@@ -1,8 +1,8 @@
-# Vibe Hub Skills
+# MyVibe Skills
 
 English | [中文](./README.zh.md)
 
-Claude Code Skills for publishing web content to [Vibe Hub](https://github.com/blocklet/vibe-hub).
+Claude Code Skills for publishing web content to [MyVibe](https://github.com/ArcBlock/my-vibe-skills).
 
 ## Prerequisites
 
@@ -13,7 +13,7 @@ Claude Code Skills for publishing web content to [Vibe Hub](https://github.com/b
 ### Quick Install (Recommended)
 
 ```bash
-npx add-skill blocklet/vibe-hub-skills
+npx add-skill ArcBlock/my-vibe-skills
 ```
 
 ### Register as Plugin Marketplace
@@ -21,7 +21,7 @@ npx add-skill blocklet/vibe-hub-skills
 Run the following command in Claude Code:
 
 ```bash
-/plugin marketplace add blocklet/vibe-hub-skills
+/plugin marketplace add ArcBlock/my-vibe-skills
 ```
 
 ### Install Skills
@@ -29,7 +29,7 @@ Run the following command in Claude Code:
 **Option 1: Via Browse UI**
 
 1. Select **Browse and install plugins**
-2. Select **vibe-hub-skills**
+2. Select **my-vibe-skills**
 3. Select the plugin(s) you want to install
 4. Select **Install now**
 
@@ -37,46 +37,46 @@ Run the following command in Claude Code:
 
 ```bash
 # Install specific plugin
-/plugin install vibe-hub@vibe-hub-skills
+/plugin install my-vibe@my-vibe-skills
 ```
 
 **Option 3: Ask the Agent**
 
 Simply tell Claude Code:
 
-> Please install Skills from github.com/blocklet/vibe-hub-skills
+> Please install Skills from github.com/ArcBlock/my-vibe-skills
 
 ## Usage
 
 ### Publish Command
 
-Publish web content (HTML file, ZIP archive, or directory) to Vibe Hub.
+Publish web content (HTML file, ZIP archive, or directory) to MyVibe.
 
 ```bash
 # Publish current directory (auto-detect project type)
-/vibe-hub:publish
+/my-vibe:publish
 
 # Publish a specific directory
-/vibe-hub:publish --dir ./dist
+/my-vibe:publish --dir ./dist
 
 # Publish a ZIP file
-/vibe-hub:publish --file ./dist.zip
+/my-vibe:publish --file ./dist.zip
 
 # Publish a single HTML file
-/vibe-hub:publish --file ./index.html
+/my-vibe:publish --file ./index.html
 
 # Import and publish from URL
-/vibe-hub:publish --url https://example.com/my-app
+/my-vibe:publish --url https://example.com/my-app
 ```
 
 You can also use natural language:
 
 ```bash
-/vibe-hub:publish Publish this project to Vibe Hub
+/my-vibe:publish Publish this project to MyVibe
 
-/vibe-hub:publish Help me publish the dist folder
+/my-vibe:publish Help me publish the dist folder
 
-/vibe-hub:publish Deploy my website to myvibe.so
+/my-vibe:publish Deploy my website to myvibe.so
 ```
 
 **Options:**
@@ -86,7 +86,7 @@ You can also use natural language:
 | `--file <path>` | `-f` | Path to HTML file or ZIP archive |
 | `--dir <path>` | `-d` | Directory to publish |
 | `--url <url>` | `-u` | URL to import and publish |
-| `--hub <url>` | `-h` | Vibe Hub URL (default: https://staging.myvibe.so/) |
+| `--hub <url>` | `-h` | MyVibe URL (default: https://staging.myvibe.so/) |
 | `--title <title>` | `-t` | Project title |
 | `--desc <desc>` | | Project description |
 | `--visibility <vis>` | `-v` | Visibility: public or private (default: public) |
@@ -100,7 +100,7 @@ You can also use natural language:
 
 ## Related Projects
 
-- [Vibe Hub](https://github.com/blocklet/vibe-hub) - AI-powered web project hosting platform
+- [MyVibe](https://github.com/ArcBlock/my-vibe-skills) - AI-powered web project hosting platform
 
 ## Author
 

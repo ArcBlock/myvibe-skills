@@ -1,29 +1,29 @@
 ---
-name: vibe-hub-publish
-description: Publish static HTML, ZIP archive, or directory to Vibe Hub. Use this skill when user wants to publish/deploy web content to Vibe Hub.
+name: my-vibe-publish
+description: Publish static HTML, ZIP archive, or directory to MyVibe. Use this skill when user wants to publish/deploy web content to MyVibe.
 ---
 
-# Vibe Hub Publish
+# MyVibe Publish
 
-Publish web content (HTML file, ZIP archive, or directory) to Vibe Hub.
+Publish web content (HTML file, ZIP archive, or directory) to MyVibe.
 
 ## Usage
 
 ```bash
 # Publish a ZIP file
-/vibe-hub:vibe-hub-publish --file ./dist.zip
+/my-vibe:my-vibe-publish --file ./dist.zip
 
 # Publish a single HTML file
-/vibe-hub:vibe-hub-publish --file ./index.html
+/my-vibe:my-vibe-publish --file ./index.html
 
 # Publish a directory (auto-zip)
-/vibe-hub:vibe-hub-publish --dir ./dist
+/my-vibe:my-vibe-publish --dir ./dist
 
 # Import and publish from URL
-/vibe-hub:vibe-hub-publish --url https://example.com/my-app
+/my-vibe:my-vibe-publish --url https://example.com/my-app
 
-# Publish to specific vibe-hub instance
-/vibe-hub:vibe-hub-publish --file ./dist.zip --hub https://custom-hub.com
+# Publish to specific my-vibe instance
+/my-vibe:my-vibe-publish --file ./dist.zip --hub https://custom-hub.com
 ```
 
 ## Options
@@ -33,7 +33,7 @@ Publish web content (HTML file, ZIP archive, or directory) to Vibe Hub.
 | `--file <path>` | `-f` | Path to HTML file or ZIP archive |
 | `--dir <path>` | `-d` | Directory to compress and publish |
 | `--url <url>` | `-u` | URL to import and publish |
-| `--hub <url>` | `-h` | Vibe Hub URL (default: https://staging.myvibe.so/) |
+| `--hub <url>` | `-h` | MyVibe URL (default: https://staging.myvibe.so/) |
 | `--title <title>` | `-t` | Project title |
 | `--desc <desc>` | | Project description |
 | `--visibility <vis>` | `-v` | Visibility: public or private (default: public) |
@@ -178,7 +178,7 @@ Options:
 Present the extracted/generated information to the user:
 
 ```
-Publishing to Vibe Hub:
+Publishing to MyVibe:
 - Title: [extracted or generated title]
 - Description: [extracted or generated description]
 - Visibility: public
@@ -188,7 +188,7 @@ Publishing to Vibe Hub:
 Use `AskUserQuestion` to confirm:
 
 ```
-Question: "Confirm publish to Vibe Hub?"
+Question: "Confirm publish to MyVibe?"
 Header: "Publish"
 Options:
   - Label: "Publish"
@@ -204,7 +204,7 @@ If user selects "Edit details" or "Other", use follow-up `AskUserQuestion` to co
 Only after user confirmation, execute the publish script:
 
 **Dependency Check Strategy:**
-1. Check if `skills/vibe-hub-publish/scripts/node_modules` directory exists
+1. Check if `skills/my-vibe-publish/scripts/node_modules` directory exists
 2. If exists: skip `npm install`, run publish directly
 3. If publish fails with module errors: run `npm install` and retry
 4. If `node_modules` doesn't exist: run `npm install` first
@@ -212,22 +212,22 @@ Only after user confirmation, execute the publish script:
 ```bash
 # Check if dependencies installed (node_modules exists)
 # If YES: run publish directly
-node skills/vibe-hub-publish/scripts/publish.mjs ...
+node skills/my-vibe-publish/scripts/publish.mjs ...
 
 # If publish fails with "Cannot find module" or similar error:
-cd skills/vibe-hub-publish/scripts && npm install
+cd skills/my-vibe-publish/scripts && npm install
 # Then retry publish
 
 # If node_modules doesn't exist: install first
-cd skills/vibe-hub-publish/scripts && npm install
-node skills/vibe-hub-publish/scripts/publish.mjs ...
+cd skills/my-vibe-publish/scripts && npm install
+node skills/my-vibe-publish/scripts/publish.mjs ...
 ```
 
 **Examples:**
 
 ```bash
 # Publish a ZIP file
-node skills/vibe-hub-publish/scripts/publish.mjs \
+node skills/my-vibe-publish/scripts/publish.mjs \
   --file ./dist.zip \
   --hub https://staging.myvibe.so \
   --title "My App" \
@@ -235,7 +235,7 @@ node skills/vibe-hub-publish/scripts/publish.mjs \
   --visibility public
 
 # Publish a directory (auto-zipped)
-node skills/vibe-hub-publish/scripts/publish.mjs \
+node skills/my-vibe-publish/scripts/publish.mjs \
   --dir ./dist \
   --hub https://staging.myvibe.so \
   --title "My App" \
@@ -243,7 +243,7 @@ node skills/vibe-hub-publish/scripts/publish.mjs \
   --visibility public
 
 # Publish a single HTML file
-node skills/vibe-hub-publish/scripts/publish.mjs \
+node skills/my-vibe-publish/scripts/publish.mjs \
   --file ./index.html \
   --hub https://staging.myvibe.so \
   --title "My App" \
@@ -251,7 +251,7 @@ node skills/vibe-hub-publish/scripts/publish.mjs \
   --visibility public
 
 # Import and publish from URL
-node skills/vibe-hub-publish/scripts/publish.mjs \
+node skills/my-vibe-publish/scripts/publish.mjs \
   --url https://example.com/my-app \
   --hub https://staging.myvibe.so \
   --title "My App" \
@@ -267,7 +267,7 @@ Published successfully!
 URL: https://staging.myvibe.so/p/{projectId}
 ```
 
-The URL format is `{hub}/p/{projectId}`, where `projectId` is generated by Vibe Hub.
+The URL format is `{hub}/p/{projectId}`, where `projectId` is generated by MyVibe.
 
 ### 5. Return Result
 

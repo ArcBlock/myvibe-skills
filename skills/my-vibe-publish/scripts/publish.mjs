@@ -38,7 +38,7 @@ async function publish(options) {
       throw new Error("Please provide only one of: --file, --dir, or --url");
     }
 
-    console.log(chalk.bold("\n🚀 Vibe Hub Publish\n"));
+    console.log(chalk.bold("\n🚀 MyVibe Publish\n"));
     console.log(chalk.gray(`Hub: ${hub}`));
 
     // Get authorization
@@ -246,9 +246,9 @@ function parseArgs(args) {
  */
 function printHelp() {
   console.log(`
-${chalk.bold("Vibe Hub Publish")}
+${chalk.bold("MyVibe Publish")}
 
-Publish web content to Vibe Hub.
+Publish web content to MyVibe.
 
 ${chalk.bold("Usage:")}
   node publish.mjs [options]
@@ -257,7 +257,7 @@ ${chalk.bold("Options:")}
   --file, -f <path>       Path to HTML file or ZIP archive
   --dir, -d <path>        Directory to compress and publish
   --url, -u <url>         URL to import and publish
-  --hub, -h <url>         Vibe Hub URL (default: ${VIBE_HUB_URL_DEFAULT})
+  --hub, -h <url>         MyVibe URL (default: ${VIBE_HUB_URL_DEFAULT})
   --title, -t <title>     Project title
   --desc <desc>           Project description
   --visibility, -v <vis>  Visibility: public or private (default: public)

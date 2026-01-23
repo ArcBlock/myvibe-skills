@@ -1,8 +1,8 @@
-# Vibe Hub Skills
+# MyVibe Skills
 
 [English](./README.md) | 中文
 
-用于将 Web 内容发布到 [Vibe Hub](https://github.com/blocklet/vibe-hub) 的 Claude Code Skills。
+用于将 Web 内容发布到 [MyVibe](https://github.com/ArcBlock/my-vibe-skills) 的 Claude Code Skills。
 
 ## 前置条件
 
@@ -13,7 +13,7 @@
 ### 快速安装（推荐）
 
 ```bash
-npx add-skill blocklet/vibe-hub-skills
+npx add-skill ArcBlock/my-vibe-skills
 ```
 
 ### 注册为插件市场
@@ -21,7 +21,7 @@ npx add-skill blocklet/vibe-hub-skills
 在 Claude Code 中运行以下命令：
 
 ```bash
-/plugin marketplace add blocklet/vibe-hub-skills
+/plugin marketplace add ArcBlock/my-vibe-skills
 ```
 
 ### 安装 Skills
@@ -29,7 +29,7 @@ npx add-skill blocklet/vibe-hub-skills
 **方式一：通过浏览界面**
 
 1. 选择 **Browse and install plugins**
-2. 选择 **vibe-hub-skills**
+2. 选择 **my-vibe-skills**
 3. 选择要安装的插件
 4. 选择 **Install now**
 
@@ -37,46 +37,46 @@ npx add-skill blocklet/vibe-hub-skills
 
 ```bash
 # 安装指定插件
-/plugin install vibe-hub@vibe-hub-skills
+/plugin install my-vibe@my-vibe-skills
 ```
 
 **方式三：让 Agent 帮你安装**
 
 直接告诉 Claude Code：
 
-> 请从 github.com/blocklet/vibe-hub-skills 安装 Skills
+> 请从 github.com/ArcBlock/my-vibe-skills 安装 Skills
 
 ## 使用方法
 
 ### Publish 命令
 
-将 Web 内容（HTML 文件、ZIP 压缩包或目录）发布到 Vibe Hub。
+将 Web 内容（HTML 文件、ZIP 压缩包或目录）发布到 MyVibe。
 
 ```bash
 # 发布当前目录（自动检测项目类型）
-/vibe-hub:publish
+/my-vibe:publish
 
 # 发布指定目录
-/vibe-hub:publish --dir ./dist
+/my-vibe:publish --dir ./dist
 
 # 发布 ZIP 文件
-/vibe-hub:publish --file ./dist.zip
+/my-vibe:publish --file ./dist.zip
 
 # 发布单个 HTML 文件
-/vibe-hub:publish --file ./index.html
+/my-vibe:publish --file ./index.html
 
 # 从 URL 导入并发布
-/vibe-hub:publish --url https://example.com/my-app
+/my-vibe:publish --url https://example.com/my-app
 ```
 
 也可以使用自然语言：
 
 ```bash
-/vibe-hub:publish 把这个项目发布到 Vibe Hub
+/my-vibe:publish 把这个项目发布到 MyVibe
 
-/vibe-hub:publish 帮我把 dist 目录发布上去
+/my-vibe:publish 帮我把 dist 目录发布上去
 
-/vibe-hub:publish 部署我的网站到 myvibe.so
+/my-vibe:publish 部署我的网站到 myvibe.so
 ```
 
 **选项：**
@@ -86,7 +86,7 @@ npx add-skill blocklet/vibe-hub-skills
 | `--file <path>` | `-f` | HTML 文件或 ZIP 压缩包路径 |
 | `--dir <path>` | `-d` | 要发布的目录 |
 | `--url <url>` | `-u` | 要导入并发布的 URL |
-| `--hub <url>` | `-h` | Vibe Hub 地址（默认：https://staging.myvibe.so/）|
+| `--hub <url>` | `-h` | MyVibe 地址（默认：https://staging.myvibe.so/）|
 | `--title <title>` | `-t` | 项目标题 |
 | `--desc <desc>` | | 项目描述 |
 | `--visibility <vis>` | `-v` | 可见性：public 或 private（默认：public）|
@@ -100,7 +100,7 @@ npx add-skill blocklet/vibe-hub-skills
 
 ## 相关项目
 
-- [Vibe Hub](https://github.com/blocklet/vibe-hub) - AI 驱动的 Web 项目托管平台
+- [MyVibe](https://github.com/ArcBlock/my-vibe-skills) - AI 驱动的 Web 项目托管平台
 
 ## 作者
 

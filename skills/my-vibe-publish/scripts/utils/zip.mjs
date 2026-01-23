@@ -23,7 +23,7 @@ export async function zipDirectory(dirPath, outputPath) {
   let zipPath = outputPath;
 
   if (!zipPath) {
-    tempDir = await mkdtemp(join(tmpdir(), "vibe-hub-publish-"));
+    tempDir = await mkdtemp(join(tmpdir(), "my-vibe-publish-"));
     const dirName = basename(dirPath);
     zipPath = join(tempDir, `${dirName}.zip`);
   }

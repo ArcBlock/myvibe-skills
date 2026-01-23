@@ -9,9 +9,9 @@ import { API_PATHS } from "./constants.mjs";
 import { handleAuthError } from "./auth.mjs";
 
 /**
- * Upload a file to Vibe Hub using TUS protocol
+ * Upload a file to MyVibe using TUS protocol
  * @param {string} filePath - Path to the file to upload
- * @param {string} hubUrl - Vibe Hub URL
+ * @param {string} hubUrl - MyVibe URL
  * @param {string} accessToken - Access token
  * @returns {Promise<{did: string, id: string, status: string}>} - Upload result
  */
@@ -35,7 +35,7 @@ export async function uploadFile(filePath, hubUrl, accessToken) {
 
   // Generate file ID
   const fileHash = crypto.randomBytes(16).toString("hex");
-  const uploaderId = "VibeHubPublish";
+  const uploaderId = "MyVibePublish";
   const fileId = `${uploaderId}-${fileHash}`;
 
   console.log(chalk.cyan(`\nUploading: ${fileName} (${(fileSize / 1024).toFixed(2)} KB)`));
@@ -178,7 +178,7 @@ async function readFileAsBuffer(filePath) {
 /**
  * Create a vibe from URL
  * @param {string} url - URL to import
- * @param {string} hubUrl - Vibe Hub URL
+ * @param {string} hubUrl - MyVibe URL
  * @param {string} accessToken - Access token
  * @param {Object} metadata - Vibe metadata
  * @returns {Promise<{did: string, id: string}>}

@@ -1,8 +1,8 @@
 {
-  "name": "vibe-hub-publish-scripts",
+  "name": "my-vibe-publish-scripts",
   "version": "1.0.1",
   "type": "module",
-  "description": "Scripts for publishing to Vibe Hub",
+  "description": "Scripts for publishing to MyVibe",
   "main": "publish.mjs",
   "scripts": {
     "publish": "node publish.mjs"

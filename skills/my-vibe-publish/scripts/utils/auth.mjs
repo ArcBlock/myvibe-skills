@@ -14,7 +14,7 @@ const TOKEN_KEY = "VIBE_HUB_ACCESS_TOKEN";
 
 /**
  * Get cached access token for a given hub URL
- * @param {string} hubUrl - The Vibe Hub URL
+ * @param {string} hubUrl - The MyVibe URL
  * @returns {Promise<string|null>} - The cached access token or null
  */
 export async function getCachedAccessToken(hubUrl) {
@@ -39,7 +39,7 @@ export async function getCachedAccessToken(hubUrl) {
 
 /**
  * Save access token for a given hub URL
- * @param {string} hubUrl - The Vibe Hub URL
+ * @param {string} hubUrl - The MyVibe URL
  * @param {string} token - The access token to save
  */
 async function saveAccessToken(hubUrl, token) {
@@ -55,7 +55,7 @@ async function saveAccessToken(hubUrl, token) {
 
 /**
  * Clear access token for a given hub URL
- * @param {string} hubUrl - The Vibe Hub URL
+ * @param {string} hubUrl - The MyVibe URL
  */
 export async function clearAccessToken(hubUrl) {
   const { hostname } = new URL(hubUrl);
@@ -71,7 +71,7 @@ export async function clearAccessToken(hubUrl) {
 
 /**
  * Get access token, prompting for authorization if needed
- * @param {string} hubUrl - The Vibe Hub URL
+ * @param {string} hubUrl - The MyVibe URL
  * @param {string} [locale='en'] - User locale
  * @returns {Promise<string>} - The access token
  */
@@ -87,15 +87,15 @@ export async function getAccessToken(hubUrl, locale = "en") {
   // Need to get new token via authorization
   const connectUrl = joinURL(origin, WELLKNOWN_SERVICE_PATH);
 
-  console.log(chalk.cyan("\nAuthorization required for Vibe Hub..."));
+  console.log(chalk.cyan("\nAuthorization required for MyVibe..."));
 
   try {
     const result = await createConnect({
       connectUrl,
       connectAction: "gen-simple-access-key",
-      source: "Vibe Hub Publish Skill",
+      source: "MyVibe Publish Skill",
       closeOnSuccess: true,
-      appName: "Vibe Hub Publish",
+      appName: "MyVibe Publish",
       appLogo: "https://staging.myvibe.so/favicon.ico",
       retry: AUTH_RETRY_COUNT,
       fetchInterval: AUTH_FETCH_INTERVAL,
@@ -137,7 +137,7 @@ export async function getAccessToken(hubUrl, locale = "en") {
 /**
  * Handle authorization error (401/403)
  * Clears the token so next request will re-authorize
- * @param {string} hubUrl - The Vibe Hub URL
+ * @param {string} hubUrl - The MyVibe URL
  * @param {number} statusCode - HTTP status code
  */
 export async function handleAuthError(hubUrl, statusCode) {

@@ -1,6 +1,6 @@
-// Vibe Hub publish constants
+// MyVibe publish constants
 
-// Default Vibe Hub URL
+// Default MyVibe URL
 export const VIBE_HUB_URL_DEFAULT = "https://staging.myvibe.so";
 
 // API endpoints
