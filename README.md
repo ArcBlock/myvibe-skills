@@ -2,7 +2,7 @@
 
 English | [中文](./README.zh.md)
 
-Claude Code Skills for publishing web content to [MyVibe](https://github.com/ArcBlock/my-vibe-skills).
+Claude Code Skills for publishing web content to [MyVibe](https://github.com/ArcBlock/myvibe-skills).
 
 ## Prerequisites
 
@@ -13,7 +13,7 @@ Claude Code Skills for publishing web content to [MyVibe](https://github.com/Arc
 ### Quick Install (Recommended)
 
 ```bash
-npx add-skill ArcBlock/my-vibe-skills
+npx add-skill ArcBlock/myvibe-skills
 ```
 
 ### Register as Plugin Marketplace
@@ -21,7 +21,7 @@ npx add-skill ArcBlock/my-vibe-skills
 Run the following command in Claude Code:
 
 ```bash
-/plugin marketplace add ArcBlock/my-vibe-skills
+/plugin marketplace add ArcBlock/myvibe-skills
 ```
 
 ### Install Skills
@@ -29,7 +29,7 @@ Run the following command in Claude Code:
 **Option 1: Via Browse UI**
 
 1. Select **Browse and install plugins**
-2. Select **my-vibe-skills**
+2. Select **myvibe-skills**
 3. Select the plugin(s) you want to install
 4. Select **Install now**
 
@@ -37,14 +37,14 @@ Run the following command in Claude Code:
 
 ```bash
 # Install specific plugin
-/plugin install my-vibe@my-vibe-skills
+/plugin install myvibe@myvibe-skills
 ```
 
 **Option 3: Ask the Agent**
 
 Simply tell Claude Code:
 
-> Please install Skills from github.com/ArcBlock/my-vibe-skills
+> Please install Skills from github.com/ArcBlock/myvibe-skills
 
 ## Usage
 
@@ -54,29 +54,29 @@ Publish web content (HTML file, ZIP archive, or directory) to MyVibe.
 
 ```bash
 # Publish current directory (auto-detect project type)
-/my-vibe:publish
+/myvibe:publish
 
 # Publish a specific directory
-/my-vibe:publish --dir ./dist
+/myvibe:publish --dir ./dist
 
 # Publish a ZIP file
-/my-vibe:publish --file ./dist.zip
+/myvibe:publish --file ./dist.zip
 
 # Publish a single HTML file
-/my-vibe:publish --file ./index.html
+/myvibe:publish --file ./index.html
 
 # Import and publish from URL
-/my-vibe:publish --url https://example.com/my-app
+/myvibe:publish --url https://example.com/my-app
 ```
 
 You can also use natural language:
 
 ```bash
-/my-vibe:publish Publish this project to MyVibe
+/myvibe:publish Publish this project to MyVibe
 
-/my-vibe:publish Help me publish the dist folder
+/myvibe:publish Help me publish the dist folder
 
-/my-vibe:publish Deploy my website to myvibe.so
+/myvibe:publish Deploy my website to myvibe.so
 ```
 
 **Options:**
@@ -100,7 +100,7 @@ You can also use natural language:
 
 ## Related Projects
 
-- [MyVibe](https://github.com/ArcBlock/my-vibe-skills) - AI-powered web project hosting platform
+- [MyVibe](https://github.com/ArcBlock/myvibe-skills) - AI-powered web project hosting platform
 
 ## Author
 

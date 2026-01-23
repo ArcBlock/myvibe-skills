@@ -1,5 +1,5 @@
 ---
-name: my-vibe-publish
+name: myvibe-publish
 description: Publish static HTML, ZIP archive, or directory to MyVibe. Use this skill when user wants to publish/deploy web content to MyVibe.
 ---
 
@@ -11,19 +11,19 @@ Publish web content (HTML file, ZIP archive, or directory) to MyVibe.
 
 ```bash
 # Publish a ZIP file
-/my-vibe:my-vibe-publish --file ./dist.zip
+/myvibe:myvibe-publish --file ./dist.zip
 
 # Publish a single HTML file
-/my-vibe:my-vibe-publish --file ./index.html
+/myvibe:myvibe-publish --file ./index.html
 
 # Publish a directory (auto-zip)
-/my-vibe:my-vibe-publish --dir ./dist
+/myvibe:myvibe-publish --dir ./dist
 
 # Import and publish from URL
-/my-vibe:my-vibe-publish --url https://example.com/my-app
+/myvibe:myvibe-publish --url https://example.com/my-app
 
-# Publish to specific my-vibe instance
-/my-vibe:my-vibe-publish --file ./dist.zip --hub https://custom-hub.com
+# Publish to specific myvibe instance
+/myvibe:myvibe-publish --file ./dist.zip --hub https://custom-hub.com
 ```
 
 ## Options
@@ -204,7 +204,7 @@ If user selects "Edit details" or "Other", use follow-up `AskUserQuestion` to co
 Only after user confirmation, execute the publish script:
 
 **Dependency Check Strategy:**
-1. Check if `skills/my-vibe-publish/scripts/node_modules` directory exists
+1. Check if `skills/myvibe-publish/scripts/node_modules` directory exists
 2. If exists: skip `npm install`, run publish directly
 3. If publish fails with module errors: run `npm install` and retry
 4. If `node_modules` doesn't exist: run `npm install` first
@@ -212,22 +212,22 @@ Only after user confirmation, execute the publish script:
 ```bash
 # Check if dependencies installed (node_modules exists)
 # If YES: run publish directly
-node skills/my-vibe-publish/scripts/publish.mjs ...
+node skills/myvibe-publish/scripts/publish.mjs ...
 
 # If publish fails with "Cannot find module" or similar error:
-cd skills/my-vibe-publish/scripts && npm install
+cd skills/myvibe-publish/scripts && npm install
 # Then retry publish
 
 # If node_modules doesn't exist: install first
-cd skills/my-vibe-publish/scripts && npm install
-node skills/my-vibe-publish/scripts/publish.mjs ...
+cd skills/myvibe-publish/scripts && npm install
+node skills/myvibe-publish/scripts/publish.mjs ...
 ```
 
 **Examples:**
 
 ```bash
 # Publish a ZIP file
-node skills/my-vibe-publish/scripts/publish.mjs \
+node skills/myvibe-publish/scripts/publish.mjs \
   --file ./dist.zip \
   --hub https://staging.myvibe.so \
   --title "My App" \
@@ -235,7 +235,7 @@ node skills/my-vibe-publish/scripts/publish.mjs \
   --visibility public
 
 # Publish a directory (auto-zipped)
-node skills/my-vibe-publish/scripts/publish.mjs \
+node skills/myvibe-publish/scripts/publish.mjs \
   --dir ./dist \
   --hub https://staging.myvibe.so \
   --title "My App" \
@@ -243,7 +243,7 @@ node skills/my-vibe-publish/scripts/publish.mjs \
   --visibility public
 
 # Publish a single HTML file
-node skills/my-vibe-publish/scripts/publish.mjs \
+node skills/myvibe-publish/scripts/publish.mjs \
   --file ./index.html \
   --hub https://staging.myvibe.so \
   --title "My App" \
@@ -251,7 +251,7 @@ node skills/my-vibe-publish/scripts/publish.mjs \
   --visibility public
 
 # Import and publish from URL
-node skills/my-vibe-publish/scripts/publish.mjs \
+node skills/myvibe-publish/scripts/publish.mjs \
   --url https://example.com/my-app \
   --hub https://staging.myvibe.so \
   --title "My App" \

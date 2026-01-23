@@ -3,8 +3,8 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import createSecretStore, { FileStore } from "@aigne/secrets";
 
-const CONFIG_FILENAME = "my-vibe-connected.yaml";
-const SERVICE_NAME = "my-vibe-publish";
+const CONFIG_FILENAME = "myvibe-connected.yaml";
+const SERVICE_NAME = "myvibe-publish";
 
 /**
  * Create a secret store for storing access tokens

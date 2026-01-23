@@ -9,7 +9,7 @@ This command publishes web content to MyVibe.
 ## Usage
 
 ```
-/my-vibe:publish [options]
+/myvibe:publish [options]
 ```
 
 ## Options
@@ -24,7 +24,7 @@ This command publishes web content to MyVibe.
 
 ## Execution
 
-Use the `my-vibe:my-vibe-publish` skill to execute the publish workflow:
+Use the `myvibe:myvibe-publish` skill to execute the publish workflow:
 
 The skill will:
 1. Analyze the content to extract metadata (title, description)

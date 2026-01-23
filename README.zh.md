@@ -2,7 +2,7 @@
 
 [English](./README.md) | 中文
 
-用于将 Web 内容发布到 [MyVibe](https://github.com/ArcBlock/my-vibe-skills) 的 Claude Code Skills。
+用于将 Web 内容发布到 [MyVibe](https://github.com/ArcBlock/myvibe-skills) 的 Claude Code Skills。
 
 ## 前置条件
 
@@ -13,7 +13,7 @@
 ### 快速安装（推荐）
 
 ```bash
-npx add-skill ArcBlock/my-vibe-skills
+npx add-skill ArcBlock/myvibe-skills
 ```
 
 ### 注册为插件市场
@@ -21,7 +21,7 @@ npx add-skill ArcBlock/my-vibe-skills
 在 Claude Code 中运行以下命令：
 
 ```bash
-/plugin marketplace add ArcBlock/my-vibe-skills
+/plugin marketplace add ArcBlock/myvibe-skills
 ```
 
 ### 安装 Skills
@@ -29,7 +29,7 @@ npx add-skill ArcBlock/my-vibe-skills
 **方式一：通过浏览界面**
 
 1. 选择 **Browse and install plugins**
-2. 选择 **my-vibe-skills**
+2. 选择 **myvibe-skills**
 3. 选择要安装的插件
 4. 选择 **Install now**
 
@@ -37,14 +37,14 @@ npx add-skill ArcBlock/my-vibe-skills
 
 ```bash
 # 安装指定插件
-/plugin install my-vibe@my-vibe-skills
+/plugin install myvibe@myvibe-skills
 ```
 
 **方式三：让 Agent 帮你安装**
 
 直接告诉 Claude Code：
 
-> 请从 github.com/ArcBlock/my-vibe-skills 安装 Skills
+> 请从 github.com/ArcBlock/myvibe-skills 安装 Skills
 
 ## 使用方法
 
@@ -54,29 +54,29 @@ npx add-skill ArcBlock/my-vibe-skills
 
 ```bash
 # 发布当前目录（自动检测项目类型）
-/my-vibe:publish
+/myvibe:publish
 
 # 发布指定目录
-/my-vibe:publish --dir ./dist
+/myvibe:publish --dir ./dist
 
 # 发布 ZIP 文件
-/my-vibe:publish --file ./dist.zip
+/myvibe:publish --file ./dist.zip
 
 # 发布单个 HTML 文件
-/my-vibe:publish --file ./index.html
+/myvibe:publish --file ./index.html
 
 # 从 URL 导入并发布
-/my-vibe:publish --url https://example.com/my-app
+/myvibe:publish --url https://example.com/my-app
 ```
 
 也可以使用自然语言：
 
 ```bash
-/my-vibe:publish 把这个项目发布到 MyVibe
+/myvibe:publish 把这个项目发布到 MyVibe
 
-/my-vibe:publish 帮我把 dist 目录发布上去
+/myvibe:publish 帮我把 dist 目录发布上去
 
-/my-vibe:publish 部署我的网站到 myvibe.so
+/myvibe:publish 部署我的网站到 myvibe.so
 ```
 
 **选项：**
@@ -100,7 +100,7 @@ npx add-skill ArcBlock/my-vibe-skills
 
 ## 相关项目
 
-- [MyVibe](https://github.com/ArcBlock/my-vibe-skills) - AI 驱动的 Web 项目托管平台
+- [MyVibe](https://github.com/ArcBlock/myvibe-skills) - AI 驱动的 Web 项目托管平台
 
 ## 作者
 

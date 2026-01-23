@@ -1,5 +1,5 @@
 {
-  "name": "my-vibe-skills",
+  "name": "myvibe-skills",
   "owner": {
     "name": "ArcBlock",
     "email": "contact@arcblock.io"
@@ -10,12 +10,12 @@
   },
   "plugins": [
     {
-      "name": "my-vibe",
+      "name": "myvibe",
       "description": "Web page creation and MyVibe publishing skills, works with MyVibe to generate and deploy various web project types",
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/my-vibe-publish"
+        "./skills/myvibe-publish"
       ]
     }
   ]
