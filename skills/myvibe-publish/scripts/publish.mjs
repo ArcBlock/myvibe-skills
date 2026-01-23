@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync, unlinkSync } from "node:fs";
 import { stat } from "node:fs/promises";
 import { resolve } from "node:path";
 import chalk from "chalk";
@@ -24,6 +24,15 @@ async function publish(options) {
     title,
     desc,
     visibility = "public",
+    // Extended metadata fields from config
+    coverImage,
+    githubRepo,
+    platformTags,
+    techStackTags,
+    categoryTags,
+    modelTags,
+    // Config file path (for cleanup after publish)
+    configPath,
   } = options;
 
   let cleanup = null;
@@ -150,6 +159,13 @@ async function publish(options) {
     if (title) actionData.title = title;
     if (desc) actionData.description = desc;
     if (visibility) actionData.visibility = visibility;
+    // Extended metadata fields
+    if (coverImage) actionData.coverImage = coverImage;
+    if (githubRepo) actionData.githubRepo = githubRepo;
+    if (platformTags && platformTags.length > 0) actionData.platformTags = platformTags;
+    if (techStackTags && techStackTags.length > 0) actionData.techStackTags = techStackTags;
+    if (categoryTags && categoryTags.length > 0) actionData.categoryTags = categoryTags;
+    if (modelTags && modelTags.length > 0) actionData.modelTags = modelTags;
 
     const actionResult = await apiPatch(actionUrl, actionData, accessToken, hub);
 
@@ -163,6 +179,16 @@ async function publish(options) {
       // Build vibe URL: /{userDid}/{did}
       const vibeUrl = joinURL(hub, vibeInfo.userDid, did);
       console.log(chalk.cyan(`🔗 ${vibeUrl}\n`));
+
+      // Delete config file after successful publish
+      if (configPath && existsSync(configPath)) {
+        try {
+          unlinkSync(configPath);
+          console.log(chalk.gray(`Cleaned up config file: ${configPath}`));
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+      }
 
       return {
         success: true,
@@ -187,6 +213,54 @@ async function publish(options) {
 }
 
 /**
+ * Load options from config file
+ * @param {string} configPath - Path to config JSON file
+ * @returns {Object} - Parsed options
+ */
+function loadConfigFile(configPath) {
+  const absolutePath = resolve(configPath);
+  if (!existsSync(absolutePath)) {
+    throw new Error(`Config file not found: ${absolutePath}`);
+  }
+
+  const content = readFileSync(absolutePath, "utf-8");
+  const config = JSON.parse(content);
+
+  const options = {
+    configPath: absolutePath, // Store for cleanup after publish
+  };
+
+  // Parse source
+  if (config.source) {
+    if (config.source.type === "dir") {
+      options.dir = config.source.path;
+    } else if (config.source.type === "file") {
+      options.file = config.source.path;
+    } else if (config.source.type === "url") {
+      options.url = config.source.path;
+    }
+  }
+
+  // Parse metadata
+  if (config.metadata) {
+    if (config.metadata.title) options.title = config.metadata.title;
+    if (config.metadata.description) options.desc = config.metadata.description;
+    if (config.metadata.visibility) options.visibility = config.metadata.visibility;
+    if (config.metadata.coverImage) options.coverImage = config.metadata.coverImage;
+    if (config.metadata.githubRepo) options.githubRepo = config.metadata.githubRepo;
+    if (config.metadata.platformTags) options.platformTags = config.metadata.platformTags;
+    if (config.metadata.techStackTags) options.techStackTags = config.metadata.techStackTags;
+    if (config.metadata.categoryTags) options.categoryTags = config.metadata.categoryTags;
+    if (config.metadata.modelTags) options.modelTags = config.metadata.modelTags;
+  }
+
+  // Parse hub URL (can be at root level)
+  if (config.hub) options.hub = config.hub;
+
+  return options;
+}
+
+/**
  * Parse command line arguments
  */
 function parseArgs(args) {
@@ -197,6 +271,13 @@ function parseArgs(args) {
     const nextArg = args[i + 1];
 
     switch (arg) {
+      case "--config":
+      case "-c":
+        // Load options from config file
+        const configOptions = loadConfigFile(nextArg);
+        Object.assign(options, configOptions);
+        i++;
+        break;
       case "--file":
       case "-f":
         options.file = nextArg;
@@ -254,6 +335,7 @@ ${chalk.bold("Usage:")}
   node publish.mjs [options]
 
 ${chalk.bold("Options:")}
+  --config, -c <path>     Load options from JSON config file
   --file, -f <path>       Path to HTML file or ZIP archive
   --dir, -d <path>        Directory to compress and publish
   --url, -u <url>         URL to import and publish
@@ -263,7 +345,26 @@ ${chalk.bold("Options:")}
   --visibility, -v <vis>  Visibility: public or private (default: public)
   --help                  Show this help message
 
+${chalk.bold("Config File Format:")}
+  {
+    "source": { "type": "dir", "path": "./dist" },
+    "metadata": {
+      "title": "My App",
+      "description": "A cool app",
+      "visibility": "public",
+      "coverImage": "https://...",
+      "githubRepo": "https://github.com/...",
+      "platformTags": [1, 2],
+      "techStackTags": [3, 4],
+      "categoryTags": [5],
+      "modelTags": [6]
+    }
+  }
+
 ${chalk.bold("Examples:")}
+  # Publish using config file
+  node publish.mjs --config ./publish-config.json
+
   # Publish a ZIP file
   node publish.mjs --file ./dist.zip --title "My App"
 

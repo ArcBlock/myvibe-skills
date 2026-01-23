@@ -1,6 +1,8 @@
 ---
 name: myvibe-publish
 description: Publish static HTML, ZIP archive, or directory to MyVibe. Use this skill when user wants to publish/deploy web content to MyVibe.
+references:
+  - references/metadata-analysis.md
 ---
 
 # MyVibe Publish
@@ -59,22 +61,35 @@ Determine the target directory to analyze:
 
 #### Metadata Extraction
 
-Extract metadata from available sources:
+Extract metadata from available sources. See `references/metadata-analysis.md` for detailed rules.
 
-**For HTML files:**
+**Basic Metadata (title, description):**
+
+For HTML files:
 - Extract `<title>` tag content
 - Extract `<meta name="description">` content
 - Extract `<meta property="og:title">` and `<meta property="og:description">`
-- Look at `<h1>` tags for main heading
 
-**For directories:**
+For directories:
 - Read `index.html` and analyze as above
 - Read `package.json` for `name` and `description` fields
-- Read `README.md` for project title and introduction
 
-**For URL import:**
-- Fetch page and extract `<title>`, meta description
-- Extract Open Graph tags
+**GitHub Repository:**
+- Check `.git/config` for remote origin URL
+- Check `package.json` for `repository` field
+
+**Extended Metadata (Tags):**
+
+First, fetch cached tags data:
+```bash
+node skills/myvibe-publish/scripts/utils/fetch-tags.mjs --hub {hub}
+```
+
+Then match tags based on project analysis:
+- `techStackTags`: Match `package.json` dependencies against tag slugs
+- `platformTags`: Detect platform config files (vercel.json, netlify.toml, etc.)
+- `modelTags`: Scan code for AI model patterns (openai, anthropic, etc.)
+- `categoryTags`: AI inference based on project characteristics
 
 ### 2. Build Decision (for Pre-built/Buildable/Monorepo projects)
 
@@ -173,68 +188,120 @@ Options:
     Description: "Specify a different path"
 ```
 
+### 2.5 Generate Cover Image (Optional)
+
+Generate a screenshot for the cover image. Skip if `--file` mode or if screenshot fails.
+
+**Using Playwright MCP:**
+1. Start local server in the output directory:
+   ```bash
+   npx serve {dir} -p 3456 &
+   ```
+2. Resize browser to OG image dimensions:
+   ```
+   browser_resize: width=1200, height=630
+   ```
+3. Navigate to `http://localhost:3456`
+4. Wait for page load, then take screenshot:
+   ```
+   browser_take_screenshot: filename="cover-screenshot.png"
+   ```
+5. Stop the server
+
+**Upload screenshot:**
+```bash
+node skills/myvibe-publish/scripts/utils/upload-image.mjs \
+  --file cover-screenshot.png \
+  --hub {hub}
+```
+
+The script outputs the uploaded image URL for `coverImage`.
+
+**Fallback:** If screenshot fails, skip coverImage. Server will generate one automatically.
+
 ### 3. Confirm Publish
 
-Present the extracted/generated information to the user:
+Present all extracted metadata to the user:
 
 ```
 Publishing to MyVibe:
-- Title: [extracted or generated title]
-- Description: [extracted or generated description]
-- Visibility: public
-- Source: [file path / directory / URL]
+──────────────────────
+Title: [extracted title]
+Description: [extracted description]
+Visibility: public
+Source: [directory path]
+
+GitHub: [repo URL or "Not detected"]
+Cover Image: [screenshot URL or "Will be auto-generated"]
+
+Tags (auto-detected):
+- Tech Stack: [matched tag names, e.g., "React, TypeScript, Vite"]
+- Platform: [matched tag names or "None"]
+- Category: [suggested category or "None"]
+- Model: [detected AI models or "None"]
 ```
 
 Use `AskUserQuestion` to confirm:
 
 ```
-Question: "Confirm publish to MyVibe?"
+Question: "Confirm publish with these details?"
 Header: "Publish"
 Options:
   - Label: "Publish"
-    Description: "Publish with the details shown above"
+    Description: "Publish with the metadata shown above"
   - Label: "Edit details"
-    Description: "Modify title, description, or visibility before publishing"
+    Description: "Modify title, description, tags, or other fields"
 ```
 
-If user selects "Edit details" or "Other", use follow-up `AskUserQuestion` to collect corrections.
+If user selects "Edit details", collect corrections via follow-up questions.
 
 ### 4. Execute Publish
 
-Only after user confirmation, execute the publish script:
+Only after user confirmation, execute the publish script.
 
 **Dependency Check Strategy:**
 1. Check if `skills/myvibe-publish/scripts/node_modules` directory exists
-2. If exists: skip `npm install`, run publish directly
+2. If not exists: run `npm install` first
 3. If publish fails with module errors: run `npm install` and retry
-4. If `node_modules` doesn't exist: run `npm install` first
+
+**Method 1: Using Config File (Recommended for full metadata)**
+
+Write a config file with all metadata, then publish:
 
 ```bash
-# Check if dependencies installed (node_modules exists)
-# If YES: run publish directly
-node skills/myvibe-publish/scripts/publish.mjs ...
-
-# If publish fails with "Cannot find module" or similar error:
-cd skills/myvibe-publish/scripts && npm install
-# Then retry publish
-
-# If node_modules doesn't exist: install first
-cd skills/myvibe-publish/scripts && npm install
-node skills/myvibe-publish/scripts/publish.mjs ...
+# Write config file in current directory
+# File: ./publish-config.json
 ```
 
-**Examples:**
+```json
+{
+  "source": { "type": "dir", "path": "./dist" },
+  "hub": "https://staging.myvibe.so",
+  "metadata": {
+    "title": "My App",
+    "description": "A cool web application",
+    "visibility": "public",
+    "coverImage": "https://...",
+    "githubRepo": "https://github.com/user/repo",
+    "platformTags": [1, 2],
+    "techStackTags": [3, 4, 5],
+    "categoryTags": [6],
+    "modelTags": [7]
+  }
+}
+```
 
 ```bash
-# Publish a ZIP file
-node skills/myvibe-publish/scripts/publish.mjs \
-  --file ./dist.zip \
-  --hub https://staging.myvibe.so \
-  --title "My App" \
-  --desc "A cool app" \
-  --visibility public
+# Publish using config file
+node skills/myvibe-publish/scripts/publish.mjs --config ./publish-config.json
+```
 
-# Publish a directory (auto-zipped)
+The config file is automatically deleted after successful publish.
+
+**Method 2: Command Line Arguments (Simple cases)**
+
+```bash
+# Publish a directory
 node skills/myvibe-publish/scripts/publish.mjs \
   --dir ./dist \
   --hub https://staging.myvibe.so \
@@ -242,32 +309,25 @@ node skills/myvibe-publish/scripts/publish.mjs \
   --desc "A cool app" \
   --visibility public
 
-# Publish a single HTML file
+# Publish a file
 node skills/myvibe-publish/scripts/publish.mjs \
-  --file ./index.html \
+  --file ./dist.zip \
   --hub https://staging.myvibe.so \
-  --title "My App" \
-  --desc "A cool app" \
-  --visibility public
+  --title "My App"
 
-# Import and publish from URL
+# Import from URL
 node skills/myvibe-publish/scripts/publish.mjs \
   --url https://example.com/my-app \
-  --hub https://staging.myvibe.so \
-  --title "My App" \
-  --desc "A cool app" \
-  --visibility public
+  --hub https://staging.myvibe.so
 ```
 
 **Script Output:**
 
-On success, the script outputs the published URL:
+On success:
 ```
 Published successfully!
-URL: https://staging.myvibe.so/p/{projectId}
+URL: https://staging.myvibe.so/{userDid}/{vibeDid}
 ```
-
-The URL format is `{hub}/p/{projectId}`, where `projectId` is generated by MyVibe.
 
 ### 5. Return Result
 
@@ -286,6 +346,9 @@ The URL format is `{hub}/p/{projectId}`, where `projectId` is generated by MyVib
 | Build failed | Analyze error, offer to help fix, or publish source as-is |
 | Missing dependencies | Run `[pm] install` first |
 | Config error | Check framework config files |
+| Screenshot failed | Skip coverImage, proceed without it |
+| Tags fetch failed | Use expired cache if available, or skip tag matching |
+| Image upload failed | Skip coverImage, proceed without it |
 
 ## Authorization
 
@@ -303,5 +366,9 @@ The script handles authorization automatically:
 - Local build detection is preprocessing only; server has its own build pipeline
 - Be conservative: if project type is uncertain, publish as-is and let server handle
 - `--dir` specifies target directory but still needs project type analysis
-- `--file` publishes the file directly without analysis
+- `--file` publishes the file directly without extended metadata analysis
 - Build detection should not block publishing
+- Tags are cached locally for 7 days to avoid repeated API calls
+- All auto-detected metadata should be shown as "suggestions" - user can modify
+- If screenshot fails, skip coverImage and let server auto-generate
+- Use config file method when publishing with extended metadata (tags, coverImage, etc.)
