@@ -18,7 +18,7 @@
 | `title` | ✅ | ✅ | HTML/package.json |
 | `description` | ✅ | ✅ | HTML/package.json |
 | `visibility` | ✅ | ❌ | 用户决定 |
-| `coverImage` | ❌ | ✅ | 浏览器截图 |
+| `coverImage` | ❌ | ✅ | 浏览器截图 + 上传 |
 | `platformTags` | ❌ | ✅ | URL 域名匹配 |
 | `techStackTags` | ❌ | ✅ | 依赖分析 |
 | `modelTags` | ❌ | ⚠️ | AI 分析代码注释 |
@@ -33,19 +33,20 @@
 ### 2.1 文件结构
 
 - **SKILL.md**: 保持简洁，描述整体工作流
-- **metadata-analysis.md**: 新增参考文件，详细描述各字段的分析规则
-- **publish.mjs**: 扩展支持更多参数
+- **metadata-analysis.md**: 参考文件，详细描述各字段的分析规则
+- **scripts/publish.mjs**: 扩展支持 `--config` 参数
+- **scripts/utils/upload-image.mjs**: 图片上传工具（TUS 协议）
 
 ### 2.2 参数传递方式
 
-当前命令行参数过多，改用 **JSON 配置文件** 传递：
+使用 **JSON 配置文件** 传递参数，文件放在**执行目录**（非 /tmp），发布完成后删除：
 
 ```bash
-# 生成配置文件
-node analyze.mjs --dir ./dist --output /tmp/publish-config.json
+# AI 分析后生成配置文件
+# 配置文件位于: ./publish-config.json
 
 # 使用配置文件发布
-node publish.mjs --config /tmp/publish-config.json
+node publish.mjs --config ./publish-config.json
 ```
 
 配置文件结构：
@@ -68,19 +69,34 @@ node publish.mjs --config /tmp/publish-config.json
 
 ### 2.3 coverImage 截图方案
 
-使用 **Playwright MCP** 或类似浏览器工具：
+**方案选择**（按优先级）：
 
-1. 发布前，用浏览器打开待发布的页面（本地 file:// 或临时服务器）
-2. 等待页面加载完成
-3. 截取全屏或指定区域
-4. 使用 TUS 协议上传截图到 image-bin 组件
+1. **Playwright MCP**（推荐）- Claude Code 已内置
+   - 使用 `browser_navigate` 打开页面
+   - 使用 `browser_take_screenshot` 截图
+   - 无需额外安装
+
+2. **agent-browser** - CLI 工具备选
+   - 项目地址：https://github.com/vercel-labs/agent-browser
+   - Rust 实现，速度快
+   - 通过 Bash 调用：`agent-browser open <url> && agent-browser screenshot <path>`
+
+**截图流程**：
+1. 启动本地服务器（如 `npx serve ./dist`）或使用 `file://` 协议
+2. 浏览器打开页面，等待加载完成
+3. 截取全屏图片，保存到本地
+4. 使用 `upload-image.mjs` 上传到 image-bin
 5. 获取图片 URL 作为 coverImage
 
-上传实现参考：`/Users/lban/arcblock/code/doc-smith-skills/skills/doc-smith-publish/scripts/utils/upload.mjs`
+### 2.4 图片上传
 
-### 2.4 Tags API 集成
+新增 `scripts/utils/upload-image.mjs`，使用 TUS 协议上传图片到 image-bin 组件。
 
-从服务端获取可用 Tags，而非硬编码：
+参考实现：`/Users/lban/arcblock/code/doc-smith-skills/skills/doc-smith-publish/scripts/utils/upload.mjs`
+
+### 2.5 Tags API 集成
+
+从服务端获取可用 Tags：
 
 ```
 GET /api/tags?type=platform&isActive=true
@@ -89,15 +105,15 @@ GET /api/tags?type=model&isActive=true
 GET /api/tags?type=category&isActive=true
 ```
 
-### 2.5 识别策略
+### 2.6 识别策略
 
-**规则匹配（本地快速执行）**：
+**规则匹配（AI 读取文件后分析）**：
 - `platformTags`: URL 域名 → tag.metadata.officialUrl 匹配
 - `techStackTags`: package.json dependencies → tag.slug 匹配
 - `githubRepo`: .git/config 或 package.json.repository
 - `title/description`: HTML meta 标签或 package.json
 
-**AI 分析（Claude 执行）**：
+**AI 推断**：
 - `categoryTags`: 基于依赖和代码特征推断分类
 - `modelTags`: 扫描代码注释中的 AI 模型特征
 
@@ -110,47 +126,43 @@ GET /api/tags?type=category&isActive=true
                 │
                 ▼
 ┌───────────────────────────────────┐
-│  Step 1: 规则分析                  │
-│  - 解析 package.json              │
-│  - 提取 HTML meta                 │
-│  - 检测 git 配置                   │
+│  Step 1: AI 分析                   │
+│  - 读取 package.json              │
+│  - 读取 HTML meta                 │
+│  - 读取 git 配置                   │
+│  - 调用 Tags API 获取可用标签      │
 │  - 匹配 platform/tech-stack tags  │
+│  - 推断 category/model tags       │
 └───────────────────────────────────┘
                 │
                 ▼
 ┌───────────────────────────────────┐
 │  Step 2: 浏览器截图                │
-│  - 启动本地服务器或打开 file://    │
-│  - 使用 Playwright 截图           │
-│  - TUS 上传获取 URL              │
+│  - 启动本地服务器                  │
+│  - 使用 Playwright MCP 截图       │
+│  - 调用 upload-image.mjs 上传     │
+│  - 获取 coverImage URL           │
 └───────────────────────────────────┘
                 │
                 ▼
 ┌───────────────────────────────────┐
-│  Step 3: AI 分析补充               │
-│  - 推断 categoryTags              │
-│  - 检测 modelTags                 │
-│  - 优化 title/description        │
-└───────────────────────────────────┘
-                │
-                ▼
-┌───────────────────────────────────┐
-│  Step 4: 用户确认                  │
+│  Step 3: 用户确认                  │
 │  - 展示所有分析结果                │
 │  - 用户可修改或确认                │
 └───────────────────────────────────┘
                 │
                 ▼
 ┌───────────────────────────────────┐
-│  Step 5: 执行发布                  │
-│  - 写入临时 JSON 配置文件          │
+│  Step 4: 执行发布                  │
+│  - 写入 ./publish-config.json    │
 │  - 调用 publish.mjs --config      │
+│  - 发布成功后删除配置文件          │
 └───────────────────────────────────┘
 ```
 
 ---
 
-## 4. 新增文件
+## 4. 新增/修改文件
 
 ### 4.1 skills/myvibe-publish/metadata-analysis.md
 
@@ -158,29 +170,28 @@ GET /api/tags?type=category&isActive=true
 - 各字段的分析规则和优先级
 - platformTags 域名映射表
 - techStackTags 依赖匹配规则
-- categoryTags 推断特征（依赖 + 代码模式）
+- categoryTags 推断特征
 - modelTags 检测特征码
 
-### 4.2 skills/myvibe-publish/scripts/analyze.mjs
+### 4.2 skills/myvibe-publish/scripts/utils/upload-image.mjs
 
-项目分析脚本：
-- 输入：项目路径
-- 输出：JSON 配置文件
-- 功能：执行规则匹配，生成初始元数据
+图片上传脚本：
+- 输入：本地图片路径
+- 输出：上传后的图片 URL
+- 使用 TUS 协议上传到 image-bin
 
-### 4.3 skills/myvibe-publish/scripts/utils/screenshot.mjs
+### 4.3 skills/myvibe-publish/scripts/publish.mjs
 
-截图工具：
-- 启动临时服务器（如需要）
-- 调用 Playwright 截图
-- TUS 上传获取 URL
+扩展支持：
+- `--config <path>`: 从 JSON 配置文件读取所有参数
+- 发布成功后删除配置文件
 
 ---
 
 ## 5. SKILL.md 更新要点
 
 1. 引入 `metadata-analysis.md` 作为参考文件
-2. 更新 Workflow，增加分析和截图步骤
+2. 更新 Workflow，增加 AI 分析和截图步骤
 3. 用户确认时展示完整元数据
 4. 使用 JSON 配置文件传参
 
@@ -191,21 +202,12 @@ GET /api/tags?type=category&isActive=true
 ### Phase 1: 基础框架
 - [ ] 创建 `metadata-analysis.md` 参考文件
 - [ ] 更新 `publish.mjs` 支持 `--config` 参数
-- [ ] 实现 JSON 配置文件读写
+- [ ] 实现 `upload-image.mjs` 图片上传脚本
 
-### Phase 2: 规则匹配
-- [ ] 实现 `analyze.mjs` 分析脚本
-- [ ] 集成 Tags API 获取
-- [ ] 实现 platform/tech-stack 匹配
-
-### Phase 3: 截图功能
-- [ ] 实现 `screenshot.mjs` 截图工具
-- [ ] 集成 TUS 上传
-- [ ] 处理本地文件服务
-
-### Phase 4: SKILL.md 更新
+### Phase 2: SKILL.md 更新
 - [ ] 更新主 SKILL.md 工作流
 - [ ] 添加 AI 分析指令
+- [ ] 添加截图和上传步骤
 - [ ] 添加用户确认格式
 
 ---
@@ -215,4 +217,4 @@ GET /api/tags?type=category&isActive=true
 1. **API 依赖**: 未认证时跳过 Tags 匹配，仅提取基础元数据
 2. **截图失败**: 降级为不设置 coverImage，让服务端自动截图
 3. **准确率**: 所有自动结果标注为"建议"，用户可修改
-4. **性能**: 限制分析文件数量，优先扫描关键文件
+4. **配置文件**: 放在执行目录，发布后删除，避免 /tmp 目录重名冲突
