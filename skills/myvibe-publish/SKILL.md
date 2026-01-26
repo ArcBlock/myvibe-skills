@@ -47,35 +47,42 @@ Publish web content (HTML file, ZIP archive, or directory) to MyVibe.
 Before starting any analysis, you MUST use the Read tool to read:
 - `references/metadata-analysis.md` - Detailed metadata extraction and tags matching workflow
 
-Then follow the workflow in the reference file. Each step MUST output results.
+### Workflow Overview
 
-### 1. Analyze Content & Detect Project Type
+1. **Detect Project Type** → determine if build is needed
+2. **Build** (if needed) → compile the project
+3. **Metadata Analysis** → extract title, description, tags, screenshot
+4. **Confirm Publish** → show metadata, get user confirmation
+5. **Execute Publish** → upload to MyVibe
 
-**All modes require metadata analysis and screenshot generation**, including:
-- `--dir`: Analyze directory content
-- `--file`: Analyze single HTML/ZIP file (extract metadata from HTML, generate screenshot)
-- Default: Analyze current working directory
+**IMPORTANT**: Step 3 (Metadata Analysis) is ALWAYS required, including after build.
 
-Follow the workflow in `references/metadata-analysis.md`:
+### 1. Detect Project Type
 
-1. **Detect project type** → Output type detection result
-2. **Extract metadata** → MUST output metadata table (with source)
-3. **Match tags** → MUST output tags table
-4. **Generate screenshot** → Output coverImage URL
+Determine what type of project this is and what the publish target will be.
 
-See reference file for detailed steps, detection methods, and output formats.
+**Target directory**: `--dir` if specified, otherwise current working directory.
 
-#### Project Type Detection Summary
+#### Project Type Detection
 
-| Check | Project Type | Action |
-|-------|-------------|--------|
-| `--file` with HTML file | **Single HTML** | Analyze HTML metadata, generate screenshot, publish |
-| `--file` with ZIP file | **ZIP Archive** | Extract, analyze, generate screenshot, publish |
-| Has `dist/index.html`, `build/index.html`, or `out/index.html` | **Pre-built** | Go to Step 2 (confirm rebuild or use existing) |
-| Has `package.json` with `build` script, no output folder | **Buildable** | Go to Step 2 (Build Decision) |
-| Has multiple `package.json` files or workspace config | **Monorepo** | Ask user which app to build |
-| Has `index.html` at root, no `package.json` | **Static** | Analyze metadata, then publish directly |
-| Cannot determine | **Unknown** | Publish as-is, let server handle |
+| Check | Project Type | Next Step |
+|-------|-------------|-----------|
+| `--file` with HTML file | **Single HTML** | → Step 3 (analyze the HTML file) |
+| `--file` with ZIP file | **ZIP Archive** | → Step 3 (extract and analyze) |
+| Has `dist/index.html`, `build/index.html`, or `out/index.html` | **Pre-built** | → Step 2 (confirm rebuild or use existing) |
+| Has `package.json` with `build` script, no output folder | **Buildable** | → Step 2 (build first) |
+| Has multiple `package.json` files or workspace config | **Monorepo** | → Step 2 (select app, then build) |
+| Has `index.html` at root, no `package.json` | **Static** | → Step 3 (analyze root directory) |
+| Cannot determine | **Unknown** | → Step 3 (analyze as-is) |
+
+Output format:
+```
+Project Type Detection:
+- Type: [type]
+- Reason: [why this type was detected]
+- Publish target: [directory or file path]
+- Next step: [Step 2: Build / Step 3: Metadata Analysis]
+```
 
 ### 2. Build Decision (for Pre-built/Buildable/Monorepo projects)
 
@@ -158,6 +165,8 @@ cd [project_dir] && [pm] install && [pm] run build
 - Offer to help fix common issues (missing dependencies, config errors)
 - User can choose to fix and retry, or publish source as-is
 
+**After build completes:** Proceed to **Step 3: Metadata Analysis** with the build output directory as the publish target.
+
 #### Monorepo Handling
 
 When multiple `package.json` files detected, use `AskUserQuestion`:
@@ -174,18 +183,21 @@ Options:
     Description: "Specify a different path"
 ```
 
-### 2.5 Generate Cover Image
+After selecting and building the app, proceed to **Step 3: Metadata Analysis**.
 
-Screenshot generation is included in Step 1 analysis workflow (see `references/metadata-analysis.md` Step 4).
+### 3. Metadata Analysis
 
-Uses `agent-browser` (headless browser CLI) for screenshot generation. See reference file for installation and usage details.
+**CRITICAL: This step is MANDATORY for ALL project types, including after build.**
 
-**Notes:**
-- All modes (including `--file`) require screenshot generation
-- For single HTML files: serve the file directly and take screenshot
-- If screenshot fails, skip it and server will auto-generate
+Follow `references/metadata-analysis.md` completely. Each step MUST output results:
 
-### 3. Confirm Publish
+1. Extract metadata (title, description, githubRepo)
+2. Fetch and match tags
+3. Generate screenshot
+
+If screenshot fails, skip coverImage and let server auto-generate.
+
+### 4. Confirm Publish
 
 Present all extracted metadata to the user:
 
@@ -224,9 +236,9 @@ Options:
 
 If user selects "Edit details", collect corrections via follow-up questions.
 
-### 4. Execute Publish
+### 5. Execute Publish
 
-Only after user confirmation, execute the publish script.
+Only after user confirmation in Step 4, execute the publish script.
 
 **Dependency Check Strategy:**
 1. Check if `skills/myvibe-publish/scripts/node_modules` directory exists
@@ -297,7 +309,7 @@ Published successfully!
 URL: https://staging.myvibe.so/{userDid}/{vibeDid}
 ```
 
-### 5. Return Result
+### 6. Return Result
 
 - On success: Show the published URL to the user
 - On failure: Show the error message and suggest solutions
