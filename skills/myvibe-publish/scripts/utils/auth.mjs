@@ -96,7 +96,8 @@ export async function getAccessToken(hubUrl, locale = "en") {
       source: "MyVibe Publish Skill",
       closeOnSuccess: true,
       appName: "MyVibe Publish",
-      appLogo: "https://staging.myvibe.so/favicon.ico",
+      appLogo:
+        "https://staging.myvibe.so/media-kit/uploads/bd15c582471327539b56896cde77ad55.svg",
       retry: AUTH_RETRY_COUNT,
       fetchInterval: AUTH_FETCH_INTERVAL,
       openPage: async (pageUrl) => {
@@ -107,9 +108,11 @@ export async function getAccessToken(hubUrl, locale = "en") {
         open(connectUrl);
 
         console.log(
-          chalk.cyan("\n🔗 Please open the following URL in your browser to authorize:"),
+          chalk.cyan(
+            "\n🔗 Please open the following URL in your browser to authorize:",
+          ),
           chalk.underline(connectUrl),
-          "\n"
+          "\n",
         );
       },
     });
@@ -129,7 +132,7 @@ export async function getAccessToken(hubUrl, locale = "en") {
         `  • Network issue\n` +
         `  • Authorization timeout (5 minutes)\n` +
         `  • User cancelled authorization\n\n` +
-        `${chalk.bold("Solution:")} Please try again.`
+        `${chalk.bold("Solution:")} Please try again.`,
     );
   }
 }
@@ -143,9 +146,13 @@ export async function getAccessToken(hubUrl, locale = "en") {
 export async function handleAuthError(hubUrl, statusCode) {
   if (statusCode === 401 || statusCode === 403) {
     console.log(
-      chalk.yellow(`\n⚠️ Authorization error (${statusCode}). Clearing saved token...`)
+      chalk.yellow(
+        `\n⚠️ Authorization error (${statusCode}). Clearing saved token...`,
+      ),
     );
     await clearAccessToken(hubUrl);
-    console.log(chalk.cyan("Please run the publish command again to re-authorize.\n"));
+    console.log(
+      chalk.cyan("Please run the publish command again to re-authorize.\n"),
+    );
   }
 }
