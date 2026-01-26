@@ -107,10 +107,16 @@ Returns cached tags (7-day expiry) with `id`, `name`, `slug`, `type` fields.
 
 | Tag Type | Match Method |
 |----------|--------------|
-| **platformTags** | Config files: `vercel.json` → vercel, `netlify.toml` → netlify, `wrangler.toml` → cloudflare |
+| **platformTags** | Analyze conversation history to identify the creation platform (Claude, Cursor, Lovable, v0, Bolt, etc.) |
+| **modelTags** | Analyze conversation history to identify the AI model used for creation (Claude 3.5 Sonnet, GPT-4, etc.) |
 | **techStackTags** | Match package.json dependencies against tag `slug` |
 | **categoryTags** | Infer from project characteristics (game libs → game, chart libs → viz, plain HTML → html) |
-| **modelTags** | Scan for patterns: `anthropic`/`claude`, `openai`/`gpt`, `gemini`, `llama`, `mistral` |
+
+**platformTags & modelTags**: Analyze conversation context to identify:
+- Which AI coding platform created the content (Claude Code, Cursor, Lovable, etc.)
+- Which AI model was used (Claude 3.5 Sonnet, GPT-4o, Gemini, etc.)
+
+If no creation context is available, leave empty.
 
 ---
 
