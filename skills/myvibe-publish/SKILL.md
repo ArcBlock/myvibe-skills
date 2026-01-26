@@ -42,54 +42,40 @@ Publish web content (HTML file, ZIP archive, or directory) to MyVibe.
 
 ## Workflow
 
+**CRITICAL: You MUST read reference files before starting analysis**
+
+Before starting any analysis, you MUST use the Read tool to read:
+- `references/metadata-analysis.md` - Detailed metadata extraction and tags matching workflow
+
+Then follow the workflow in the reference file. Each step MUST output results.
+
 ### 1. Analyze Content & Detect Project Type
 
-Determine the target directory to analyze:
-- If `--dir` specified: analyze that directory
-- If `--file` specified: skip to Step 3 (publish file directly)
-- Otherwise: analyze current working directory
+**All modes require metadata analysis and screenshot generation**, including:
+- `--dir`: Analyze directory content
+- `--file`: Analyze single HTML/ZIP file (extract metadata from HTML, generate screenshot)
+- Default: Analyze current working directory
 
-#### Project Type Detection (in priority order)
+Follow the workflow in `references/metadata-analysis.md`:
+
+1. **Detect project type** → Output type detection result
+2. **Extract metadata** → MUST output metadata table (with source)
+3. **Match tags** → MUST output tags table
+4. **Generate screenshot** → Output coverImage URL
+
+See reference file for detailed steps, detection methods, and output formats.
+
+#### Project Type Detection Summary
 
 | Check | Project Type | Action |
 |-------|-------------|--------|
+| `--file` with HTML file | **Single HTML** | Analyze HTML metadata, generate screenshot, publish |
+| `--file` with ZIP file | **ZIP Archive** | Extract, analyze, generate screenshot, publish |
 | Has `dist/index.html`, `build/index.html`, or `out/index.html` | **Pre-built** | Go to Step 2 (confirm rebuild or use existing) |
 | Has `package.json` with `build` script, no output folder | **Buildable** | Go to Step 2 (Build Decision) |
 | Has multiple `package.json` files or workspace config | **Monorepo** | Ask user which app to build |
-| Has `index.html` at root, no `package.json` | **Static** | Publish directly |
+| Has `index.html` at root, no `package.json` | **Static** | Analyze metadata, then publish directly |
 | Cannot determine | **Unknown** | Publish as-is, let server handle |
-
-#### Metadata Extraction
-
-Extract metadata from available sources. See `references/metadata-analysis.md` for detailed rules.
-
-**Basic Metadata (title, description):**
-
-For HTML files:
-- Extract `<title>` tag content
-- Extract `<meta name="description">` content
-- Extract `<meta property="og:title">` and `<meta property="og:description">`
-
-For directories:
-- Read `index.html` and analyze as above
-- Read `package.json` for `name` and `description` fields
-
-**GitHub Repository:**
-- Check `.git/config` for remote origin URL
-- Check `package.json` for `repository` field
-
-**Extended Metadata (Tags):**
-
-First, fetch cached tags data:
-```bash
-node skills/myvibe-publish/scripts/utils/fetch-tags.mjs --hub {hub}
-```
-
-Then match tags based on project analysis:
-- `techStackTags`: Match `package.json` dependencies against tag slugs
-- `platformTags`: Detect platform config files (vercel.json, netlify.toml, etc.)
-- `modelTags`: Scan code for AI model patterns (openai, anthropic, etc.)
-- `categoryTags`: AI inference based on project characteristics
 
 ### 2. Build Decision (for Pre-built/Buildable/Monorepo projects)
 
@@ -188,36 +174,14 @@ Options:
     Description: "Specify a different path"
 ```
 
-### 2.5 Generate Cover Image (Optional)
+### 2.5 Generate Cover Image
 
-Generate a screenshot for the cover image. Skip if `--file` mode or if screenshot fails.
+Screenshot generation is included in Step 1 analysis workflow (see `references/metadata-analysis.md` Step 4).
 
-**Using Playwright MCP:**
-1. Start local server in the output directory:
-   ```bash
-   npx serve {dir} -p 3456 &
-   ```
-2. Resize browser to OG image dimensions:
-   ```
-   browser_resize: width=1200, height=630
-   ```
-3. Navigate to `http://localhost:3456`
-4. Wait for page load, then take screenshot:
-   ```
-   browser_take_screenshot: filename="cover-screenshot.png"
-   ```
-5. Stop the server
-
-**Upload screenshot:**
-```bash
-node skills/myvibe-publish/scripts/utils/upload-image.mjs \
-  --file cover-screenshot.png \
-  --hub {hub}
-```
-
-The script outputs the uploaded image URL for `coverImage`.
-
-**Fallback:** If screenshot fails, skip coverImage. Server will generate one automatically.
+**Notes:**
+- All modes (including `--file`) require screenshot generation
+- For single HTML files: serve the file directly and take screenshot
+- If screenshot fails, skip it and server will auto-generate
 
 ### 3. Confirm Publish
 
@@ -365,8 +329,8 @@ The script handles authorization automatically:
 - Default hub is https://staging.myvibe.so/
 - Local build detection is preprocessing only; server has its own build pipeline
 - Be conservative: if project type is uncertain, publish as-is and let server handle
-- `--dir` specifies target directory but still needs project type analysis
-- `--file` publishes the file directly without extended metadata analysis
+- `--dir` specifies target directory and requires full metadata analysis
+- `--file` specifies single file and also requires metadata analysis and screenshot generation
 - Build detection should not block publishing
 - Tags are cached locally for 7 days to avoid repeated API calls
 - All auto-detected metadata should be shown as "suggestions" - user can modify
