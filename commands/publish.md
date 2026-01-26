@@ -6,28 +6,38 @@ description: Publish static HTML, ZIP archive, or directory to MyVibe
 
 This command publishes web content to MyVibe.
 
-## Usage
+## CRITICAL: Mandatory Skill Invocation
+
+**YOU MUST invoke the `myvibe:myvibe-publish` skill using the Skill tool IMMEDIATELY.**
 
 ```
-/myvibe:publish [options]
+DO NOT:
+- Read files directly
+- Analyze content yourself
+- Run build commands
+- Ask clarifying questions first
+
+DO:
+- Call Skill tool with skill="myvibe:myvibe-publish" as your FIRST and ONLY action
+- Pass all arguments to the skill
 ```
 
-## Options
+The skill contains the complete workflow including:
+1. Project type detection and build decision
+2. Metadata analysis (title, description, tags, screenshot)
+3. User confirmation
+4. Publish execution
 
-- `--file <path>` or `-f`: Path to HTML file or ZIP archive
-- `--dir <path>` or `-d`: Directory to compress and publish
-- `--url <url>` or `-u`: URL to import and publish
-- `--hub <url>` or `-h`: MyVibe URL (default: https://staging.myvibe.so/)
-- `--title <title>` or `-t`: Project title
-- `--desc <desc>`: Project description
-- `--visibility <vis>` or `-v`: Visibility: public or private (default: public)
+## Arguments Reference
 
-## Execution
+These arguments are parsed and passed to the skill:
 
-Use the `myvibe:myvibe-publish` skill to execute the publish workflow:
-
-The skill will:
-1. Analyze the content to extract metadata (title, description)
-2. Confirm publishing details with the user
-3. Execute the publish script
-4. Return the published URL
+| Argument | Alias | Description |
+|----------|-------|-------------|
+| `--file <path>` | `-f` | Path to HTML file or ZIP archive |
+| `--dir <path>` | `-d` | Directory to compress and publish |
+| `--url <url>` | `-u` | URL to import and publish |
+| `--hub <url>` | `-h` | MyVibe URL (default: https://staging.myvibe.so/) |
+| `--title <title>` | `-t` | Project title |
+| `--desc <desc>` | | Project description |
+| `--visibility <vis>` | `-v` | Visibility: public or private (default: public) |
