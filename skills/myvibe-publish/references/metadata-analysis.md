@@ -51,7 +51,7 @@ This document describes how to analyze and extract metadata for MyVibe publish.
 |-------|--------|--------|
 | `title` | HTML/package.json | Rule-based extraction |
 | `description` | HTML/package.json | Rule-based extraction |
-| `coverImage` | Browser screenshot | Playwright MCP + upload |
+| `coverImage` | Browser screenshot | agent-browser + upload |
 | `githubRepo` | .git/config, package.json | Rule-based extraction |
 | `platformTags` | URL analysis | Domain matching |
 | `techStackTags` | package.json | Dependency matching |
@@ -299,34 +299,68 @@ For each model tag:
 
 ## 7. coverImage
 
-Screenshot the rendered page and upload.
+Screenshot the rendered page and upload using `agent-browser` (headless browser CLI).
 
-### 7.1 Screenshot Process
+### 7.1 Check and Install agent-browser
 
-**Using Playwright MCP:**
-1. Start local server: `npx serve {dir} -p 3456`
-2. Navigate: `browser_navigate` to `http://localhost:3456`
-3. Wait for page load
-4. Screenshot: `browser_take_screenshot` with filename
-5. Stop server
+**Check if installed:**
+```bash
+which agent-browser
+```
+
+**If not installed, install it:**
+```bash
+npm install -g agent-browser
+agent-browser install  # Download Chromium
+```
+
+**For Linux with missing dependencies:**
+```bash
+agent-browser install --with-deps
+```
+
+### 7.2 Screenshot Process
+
+**Using agent-browser (headless, no visible browser window):**
+
+1. Start local server in background:
+   ```bash
+   npx serve {dir} -p 3456 &
+   ```
+
+2. Take screenshot with agent-browser:
+   ```bash
+   agent-browser open http://localhost:3456
+   agent-browser screenshot cover-screenshot.png
+   agent-browser close
+   ```
+
+**For single HTML file:**
+```bash
+npx serve {file_parent_dir} -p 3456 &
+agent-browser open http://localhost:3456/{filename}
+agent-browser screenshot cover-screenshot.png
+agent-browser close
+```
 
 **Screenshot settings:**
-- Size: 1200x630 (standard OG image ratio)
 - Format: PNG
-- Full page: No (viewport only)
+- Default viewport size (no --full flag for OG-style image)
 
-### 7.2 Upload Process
+3. Stop the local server after screenshot
+
+### 7.3 Upload Process
 
 Use `upload-image.mjs` to upload to image-bin:
 ```bash
-node scripts/utils/upload-image.mjs --file screenshot.png --hub {hub}
+node scripts/utils/upload-image.mjs --file cover-screenshot.png --hub {hub}
 ```
 
 Returns the uploaded image URL for coverImage.
 
-### 7.3 Fallback
+### 7.4 Fallback
 
-If screenshot fails:
+If screenshot fails (agent-browser not available, installation fails, etc.):
 - Leave coverImage empty
 - Server will generate screenshot automatically on first visit
 
@@ -401,31 +435,12 @@ Project Type Detection:
 
 ### Step 4: Generate Screenshot
 
-**For directory mode:**
-1. **Start local server**:
-   ```bash
-   npx serve {dir} -p 3456 &
-   ```
+Follow the detailed instructions in **Section 7 (coverImage)** above:
 
-**For single HTML file (`--file` mode):**
-1. **Start local server** serving the file's parent directory:
-   ```bash
-   npx serve {file_parent_dir} -p 3456 &
-   ```
-   Then navigate to `http://localhost:3456/{filename}`
-
-2. **Use Playwright MCP**:
-   - `browser_resize`: width=1200, height=630
-   - `browser_navigate`: http://localhost:3456 (or http://localhost:3456/{filename} for single file)
-   - `browser_take_screenshot`: filename="cover-screenshot.png"
-
-3. **Upload screenshot**:
-   ```bash
-   node scripts/utils/upload-image.mjs --file cover-screenshot.png --hub {hub}
-   ```
-
-4. **Stop server**
-
+1. Check and install `agent-browser` if needed (Section 7.1)
+2. Start local server and take screenshot (Section 7.2)
+3. Upload screenshot (Section 7.3)
+4. Stop server
 5. **Output Screenshot status** (REQUIRED)
 
 **Fallback:** If screenshot fails, skip coverImage. Server will auto-generate.
@@ -476,26 +491,23 @@ Proceed with these values? [Confirm / Edit]
 
 ## 10. Config File Format
 
-After user confirmation, generate `publish-config.json`:
+After user confirmation, generate `publish-config.yaml`:
 
-```json
-{
-  "source": {
-    "type": "dir",
-    "path": "./dist"
-  },
-  "metadata": {
-    "title": "My Awesome App",
-    "description": "A cool web application",
-    "visibility": "public",
-    "coverImage": "https://image-bin.arcblock.io/xxx.png",
-    "githubRepo": "https://github.com/user/repo",
-    "platformTags": [1],
-    "techStackTags": [2, 3, 4],
-    "categoryTags": [5],
-    "modelTags": [6]
-  }
-}
+```yaml
+source:
+  type: dir
+  path: ./dist
+hub: https://staging.myvibe.so
+metadata:
+  title: My Awesome App
+  description: A cool web application
+  visibility: public
+  coverImage: https://image-bin.arcblock.io/xxx.png
+  githubRepo: https://github.com/user/repo
+  platformTags: [1]
+  techStackTags: [2, 3, 4]
+  categoryTags: [5]
+  modelTags: [6]
 ```
 
 Tags use numeric IDs from the API response.

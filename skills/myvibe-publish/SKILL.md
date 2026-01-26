@@ -178,6 +178,8 @@ Options:
 
 Screenshot generation is included in Step 1 analysis workflow (see `references/metadata-analysis.md` Step 4).
 
+Uses `agent-browser` (headless browser CLI) for screenshot generation. See reference file for installation and usage details.
+
 **Notes:**
 - All modes (including `--file`) require screenshot generation
 - For single HTML files: serve the file directly and take screenshot
@@ -230,34 +232,33 @@ Only after user confirmation, execute the publish script.
 
 **Method 1: Using Config File (Recommended for full metadata)**
 
-Write a config file with all metadata, then publish:
+Write a YAML config file with all metadata, then publish:
 
 ```bash
 # Write config file in current directory
-# File: ./publish-config.json
+# File: ./publish-config.yaml
 ```
 
-```json
-{
-  "source": { "type": "dir", "path": "./dist" },
-  "hub": "https://staging.myvibe.so",
-  "metadata": {
-    "title": "My App",
-    "description": "A cool web application",
-    "visibility": "public",
-    "coverImage": "https://...",
-    "githubRepo": "https://github.com/user/repo",
-    "platformTags": [1, 2],
-    "techStackTags": [3, 4, 5],
-    "categoryTags": [6],
-    "modelTags": [7]
-  }
-}
+```yaml
+source:
+  type: dir
+  path: ./dist
+hub: https://staging.myvibe.so
+metadata:
+  title: My App
+  description: A cool web application
+  visibility: public
+  coverImage: https://...
+  githubRepo: https://github.com/user/repo
+  platformTags: [1, 2]
+  techStackTags: [3, 4, 5]
+  categoryTags: [6]
+  modelTags: [7]
 ```
 
 ```bash
 # Publish using config file
-node skills/myvibe-publish/scripts/publish.mjs --config ./publish-config.json
+node skills/myvibe-publish/scripts/publish.mjs --config ./publish-config.yaml
 ```
 
 The config file is automatically deleted after successful publish.
@@ -311,6 +312,8 @@ URL: https://staging.myvibe.so/{userDid}/{vibeDid}
 | Missing dependencies | Run `[pm] install` first |
 | Config error | Check framework config files |
 | Screenshot failed | Skip coverImage, proceed without it |
+| agent-browser not installed | Run `npm install -g agent-browser && agent-browser install` |
+| agent-browser Chromium missing | Run `agent-browser install` (or `--with-deps` on Linux) |
 | Tags fetch failed | Use expired cache if available, or skip tag matching |
 | Image upload failed | Skip coverImage, proceed without it |
 

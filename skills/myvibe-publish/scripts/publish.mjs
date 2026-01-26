@@ -6,6 +6,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import chalk from "chalk";
 import { joinURL } from "ufo";
+import yaml from "js-yaml";
 
 import { VIBE_HUB_URL_DEFAULT, API_PATHS } from "./utils/constants.mjs";
 import { getAccessToken } from "./utils/auth.mjs";
@@ -214,8 +215,8 @@ async function publish(options) {
 }
 
 /**
- * Load options from config file
- * @param {string} configPath - Path to config JSON file
+ * Load options from config file (YAML format)
+ * @param {string} configPath - Path to config YAML file
  * @returns {Object} - Parsed options
  */
 function loadConfigFile(configPath) {
@@ -225,7 +226,7 @@ function loadConfigFile(configPath) {
   }
 
   const content = readFileSync(absolutePath, "utf-8");
-  const config = JSON.parse(content);
+  const config = yaml.load(content);
 
   const options = {
     configPath: absolutePath, // Store for cleanup after publish
@@ -336,7 +337,7 @@ ${chalk.bold("Usage:")}
   node publish.mjs [options]
 
 ${chalk.bold("Options:")}
-  --config, -c <path>     Load options from JSON config file
+  --config, -c <path>     Load options from YAML config file
   --file, -f <path>       Path to HTML file or ZIP archive
   --dir, -d <path>        Directory to compress and publish
   --url, -u <url>         URL to import and publish
@@ -346,25 +347,25 @@ ${chalk.bold("Options:")}
   --visibility, -v <vis>  Visibility: public or private (default: public)
   --help                  Show this help message
 
-${chalk.bold("Config File Format:")}
-  {
-    "source": { "type": "dir", "path": "./dist" },
-    "metadata": {
-      "title": "My App",
-      "description": "A cool app",
-      "visibility": "public",
-      "coverImage": "https://...",
-      "githubRepo": "https://github.com/...",
-      "platformTags": [1, 2],
-      "techStackTags": [3, 4],
-      "categoryTags": [5],
-      "modelTags": [6]
-    }
-  }
+${chalk.bold("Config File Format (YAML):")}
+  source:
+    type: dir
+    path: ./dist
+  hub: https://staging.myvibe.so
+  metadata:
+    title: My App
+    description: A cool app
+    visibility: public
+    coverImage: https://...
+    githubRepo: https://github.com/...
+    platformTags: [1, 2]
+    techStackTags: [3, 4]
+    categoryTags: [5]
+    modelTags: [6]
 
 ${chalk.bold("Examples:")}
   # Publish using config file
-  node publish.mjs --config ./publish-config.json
+  node publish.mjs --config ./publish-config.yaml
 
   # Publish a ZIP file
   node publish.mjs --file ./dist.zip --title "My App"
