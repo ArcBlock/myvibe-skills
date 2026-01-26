@@ -2,6 +2,49 @@
 
 This document describes how to analyze and extract metadata for MyVibe publish.
 
+---
+
+## Execution Checklist
+
+**CRITICAL: Execute the following steps in order. Each step MUST output results.**
+
+- [ ] **Step 1: Detect project type** → Output type detection result
+- [ ] **Step 2: Extract metadata** → Output metadata table (with source)
+- [ ] **Step 3: Fetch and match tags** → Output tags table
+- [ ] **Step 4: Generate screenshot** → Output coverImage URL
+- [ ] **Step 5: Show confirmation** → Display all metadata for user confirmation
+
+**Note:** Each step MUST output a result table or status. Do not skip any step.
+
+---
+
+## Required Output Format
+
+### Metadata Output (MUST output after Step 2)
+
+| Field | Value | Source |
+|-------|-------|--------|
+| title | [extracted value] | `<title>` / package.json / not set |
+| description | [extracted value] | `<meta>` / package.json / not set |
+| githubRepo | [extracted value] | .git/config / package.json / not detected |
+
+### Tags Output (MUST output after Step 3)
+
+| Type | Match Result | Tag IDs |
+|------|--------------|---------|
+| techStackTags | [tag names] or none | [ids] |
+| platformTags | [tag names] or none | [ids] |
+| categoryTags | [tag names] or none | [ids] |
+| modelTags | [tag names] or none | [ids] |
+
+### Screenshot Output (MUST output after Step 4)
+
+| Status | coverImage URL |
+|--------|----------------|
+| success / skipped / failed | [URL or "will be auto-generated"] |
+
+---
+
 ## Field Overview
 
 | Field | Source | Method |
@@ -41,10 +84,34 @@ This document describes how to analyze and extract metadata for MyVibe publish.
 
 ### 1.3 githubRepo
 
-**Check sources:**
-1. `.git/config` - parse `[remote "origin"]` URL
-2. `package.json` - `repository` field (string or object with `url`)
-3. `package.json` - `homepage` field (if github.com)
+**IMPORTANT: Supports subdirectory execution**
+
+When executing from a subdirectory, the .git directory may be in a parent directory. You must correctly find the git root.
+
+**Detection steps:**
+
+1. **Find git root directory** (supports subdirectory execution):
+   ```bash
+   git rev-parse --show-toplevel
+   ```
+
+2. **Read remote URL**:
+   ```bash
+   # Method 1: Use git command
+   git remote get-url origin
+
+   # Method 2: Read config file
+   cat "$(git rev-parse --show-toplevel)/.git/config" | grep -A2 'remote "origin"'
+   ```
+
+3. **Convert URL format**:
+   - SSH format: `git@github.com:owner/repo.git` → `https://github.com/owner/repo`
+   - HTTPS format: Remove `.git` suffix
+   - Other formats: Keep as-is (may be other git services)
+
+**Fallback sources (if .git doesn't exist):**
+1. `package.json` - `repository` field (string or object with `url`)
+2. `package.json` - `homepage` field (if github.com)
 
 **Format:** Full GitHub URL (https://github.com/owner/repo)
 
@@ -265,39 +332,121 @@ If screenshot fails:
 
 ---
 
-## 8. Analysis Workflow
+## 8. Analysis Workflow (Detailed Steps)
+
+**CRITICAL: Execute in order. Each step MUST output results.**
+
+### Step 1: Detect Project Type
+
+Check project type and output result:
 
 ```
-1. Get cached tags
-   - Run: node scripts/utils/fetch-tags.mjs --hub {hub}
-   - Parse JSON output to get all tag types
+Project Type Detection:
+- Type: [Single HTML / ZIP Archive / Static / Pre-built / Buildable / Monorepo / Unknown]
+- Reason: [detected characteristics, e.g., "has index.html at root, no package.json"]
+- Next action: [publish directly / need build decision / ...]
+```
 
-2. Read project files
-   - package.json (if exists)
-   - index.html (in dist/build/out or root)
-   - README.md (if exists)
-   - .git/config (if exists)
+**Single file notes (`--file` mode):**
+- Single HTML files still need full metadata analysis
+- Extract title, description from the HTML file
+- Detect .git/config to get githubRepo (check parent directories)
+- Execute tags matching (may match "html" category)
+- Generate screenshot by serving the single file
 
-3. Extract basic metadata
-   - title (rule-based)
-   - description (rule-based)
-   - githubRepo (rule-based)
+**ZIP archive notes:**
+- Extract ZIP to temp directory first
+- Analyze extracted content as directory
+- Follow standard analysis workflow
 
-4. Match tags against cached data
-   - platformTags (rule-based, match slug)
-   - techStackTags (rule-based, match slug)
-   - modelTags (pattern-based)
-   - categoryTags (AI inference from available tags)
+**Static project notes:**
+- Static projects (index.html at root, no package.json) still need full metadata analysis
+- Extract title, description from index.html
+- Detect .git/config to get githubRepo
+- Execute tags matching (may match "html" category)
+- Generate screenshot
 
-5. Generate screenshot
-   - Start server
-   - Take screenshot with Playwright MCP
-   - Upload image
-   - Get coverImage URL
+### Step 2: Extract Metadata
 
-6. Compile results
-   - All extracted/matched values
-   - Confidence indicators for AI-inferred values
+1. **Read project files**:
+   - For `--file` mode: Read the specified HTML file directly
+   - For directory mode: Read `index.html` (in dist/build/out or root)
+   - `package.json` (if exists)
+   - `.git/config` (if exists, check parent directories for subdirectory case)
+   - `README.md` (if exists)
+
+2. **Extract by priority**:
+   - title: `<title>` > `og:title` > package.json name > h1
+   - description: `<meta description>` > `og:description` > package.json description
+   - githubRepo: `.git/config` origin > package.json repository
+
+3. **Output Metadata table** (REQUIRED)
+
+### Step 3: Fetch and Match Tags
+
+1. **Fetch cached tags**:
+   ```bash
+   node scripts/utils/fetch-tags.mjs --hub {hub}
+   ```
+
+2. **Parse JSON output** to get all tag types
+
+3. **Execute matching**:
+   - platformTags: Detect config files (vercel.json, netlify.toml, etc.)
+   - techStackTags: Match package.json dependencies with tag.slug
+   - modelTags: Scan code for AI model patterns
+   - categoryTags: AI inference based on project characteristics
+
+4. **Output Tags table** (REQUIRED)
+
+### Step 4: Generate Screenshot
+
+**For directory mode:**
+1. **Start local server**:
+   ```bash
+   npx serve {dir} -p 3456 &
+   ```
+
+**For single HTML file (`--file` mode):**
+1. **Start local server** serving the file's parent directory:
+   ```bash
+   npx serve {file_parent_dir} -p 3456 &
+   ```
+   Then navigate to `http://localhost:3456/{filename}`
+
+2. **Use Playwright MCP**:
+   - `browser_resize`: width=1200, height=630
+   - `browser_navigate`: http://localhost:3456 (or http://localhost:3456/{filename} for single file)
+   - `browser_take_screenshot`: filename="cover-screenshot.png"
+
+3. **Upload screenshot**:
+   ```bash
+   node scripts/utils/upload-image.mjs --file cover-screenshot.png --hub {hub}
+   ```
+
+4. **Stop server**
+
+5. **Output Screenshot status** (REQUIRED)
+
+**Fallback:** If screenshot fails, skip coverImage. Server will auto-generate.
+
+### Step 5: Summarize Results
+
+Display complete confirmation info:
+
+```
+Publishing to MyVibe:
+──────────────────────
+Title: [extracted value]
+Description: [extracted value]
+GitHub: [URL or "Not detected"]
+Cover Image: [URL or "Will be auto-generated"]
+
+Tags (auto-detected):
+- Tech Stack: [matched names or "None"]
+- Platform: [matched names or "None"]
+- Category: [matched names or "None"]
+- Model: [matched names or "None"]
 ```
 
 ---
