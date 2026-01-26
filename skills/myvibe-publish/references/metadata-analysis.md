@@ -323,31 +323,68 @@ agent-browser install --with-deps
 
 **Using agent-browser (headless, no visible browser window):**
 
-1. Start local server in background:
-   ```bash
-   npx serve {dir} -p 3456 &
-   ```
+**IMPORTANT: Execute commands separately to avoid timing issues.**
 
-2. Take screenshot with agent-browser:
-   ```bash
-   agent-browser open http://localhost:3456
-   agent-browser screenshot cover-screenshot.png
-   agent-browser close
-   ```
+All target users have Node.js installed (required for Claude Code and web development), so always use Node-based static servers.
+
+**Step 1: Start local server (separate Bash call)**
+
+```bash
+npx -y http-server {dir} -p 3456 &
+```
+
+Or use `serve`:
+```bash
+npx -y serve {dir} -p 3456 &
+```
+
+**Step 2: Wait for server to be ready (separate Bash call)**
+
+```bash
+# Wait and verify server is running
+sleep 3 && curl -s http://localhost:3456 | head -1
+```
+
+If curl fails, wait longer or check if port is in use.
+
+**Step 3: Take screenshot (separate Bash call)**
+
+```bash
+agent-browser open http://localhost:3456 && agent-browser screenshot /tmp/cover-screenshot.png && agent-browser close
+```
+
+**Step 4: Stop server (separate Bash call)**
+
+```bash
+pkill -f "http-server.*3456" 2>/dev/null || pkill -f "serve.*3456" 2>/dev/null || true
+```
 
 **For single HTML file:**
+
 ```bash
-npx serve {file_parent_dir} -p 3456 &
-agent-browser open http://localhost:3456/{filename}
-agent-browser screenshot cover-screenshot.png
-agent-browser close
+# Step 1: Start server in parent directory
+npx -y http-server {file_parent_dir} -p 3456 &
+
+# Step 2: Wait for server
+sleep 3 && curl -s http://localhost:3456 | head -1
+
+# Step 3: Take screenshot (specify filename in URL)
+agent-browser open http://localhost:3456/{filename} && agent-browser screenshot /tmp/cover-screenshot.png && agent-browser close
+
+# Step 4: Stop server
+pkill -f "http-server.*3456" 2>/dev/null || true
 ```
 
 **Screenshot settings:**
 - Format: PNG
+- Save to `/tmp/cover-screenshot.png` (absolute path recommended)
 - Default viewport size (no --full flag for OG-style image)
 
-3. Stop the local server after screenshot
+**Why separate Bash calls?**
+- Combining server start + screenshot in one call often fails due to timing
+- `npx` needs time to download/verify packages
+- Server needs time to bind to port
+- Separate calls ensure each step completes before the next begins
 
 ### 7.3 Upload Process
 
@@ -438,10 +475,14 @@ Project Type Detection:
 Follow the detailed instructions in **Section 7 (coverImage)** above:
 
 1. Check and install `agent-browser` if needed (Section 7.1)
-2. Start local server and take screenshot (Section 7.2)
-3. Upload screenshot (Section 7.3)
-4. Stop server
-5. **Output Screenshot status** (REQUIRED)
+2. Start local server (Section 7.2 Step 1) - **use separate Bash call**
+3. Wait for server to be ready (Section 7.2 Step 2) - **use separate Bash call**
+4. Take screenshot with agent-browser (Section 7.2 Step 3) - **use separate Bash call**
+5. Upload screenshot (Section 7.3)
+6. Stop server (Section 7.2 Step 4) - **use separate Bash call**
+7. **Output Screenshot status** (REQUIRED)
+
+**CRITICAL: Do NOT combine server start and screenshot commands in a single Bash call.** This causes timing issues where the screenshot is attempted before the server is ready, resulting in `ERR_CONNECTION_REFUSED` errors.
 
 **Fallback:** If screenshot fails, skip coverImage. Server will auto-generate.
 
