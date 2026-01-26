@@ -19,7 +19,7 @@
 | Field | Value | Source |
 |-------|-------|--------|
 | title | [value] | `<title>` / package.json / not set |
-| description | [value] | `<meta>` / package.json / not set |
+| description | [story text] | AI-generated |
 | githubRepo | [value] | .git/config / package.json / not detected |
 
 ### Tags Table (after Step 3)
@@ -57,7 +57,28 @@ Project Type Detection:
 Priority: `<title>` → `og:title` → package.json `name` → first `<h1>` → directory name
 
 ### description
-Priority: `<meta description>` → `og:description` → package.json `description` → README first paragraph
+
+Generate a story-style description (50-150 words) covering:
+
+1. **Why** - Motivation, problem solved, or inspiration
+2. **What** - Core functionality and value
+3. **Journey** (optional) - Creation process or iterations
+
+**Information sources** (by priority):
+
+| Source | What to extract |
+|--------|-----------------|
+| Conversation history | Original request, creation process, iterations |
+| README.md | Motivation, features |
+| Source code | Main features, functionality |
+| package.json | name, description, keywords |
+| Git history | Development journey (`git log --oneline -20`) |
+| HTML content | App purpose from UI text |
+
+**Guidelines:**
+- Natural, conversational tone
+- Focus on value and story, not technical specs
+- Avoid generic descriptions like "A web application built with React"
 
 ### githubRepo
 
@@ -145,7 +166,10 @@ Display all metadata and ask user to confirm:
 Publishing to MyVibe:
 ──────────────────────
 Title: [value]
-Description: [value]
+
+Description:
+[generated story, 50-150 words]
+
 GitHub: [URL or "Not detected"]
 Cover Image: [URL or "Will be auto-generated"]
 

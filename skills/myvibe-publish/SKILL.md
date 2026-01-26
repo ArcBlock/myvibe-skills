@@ -193,7 +193,10 @@ Present all extracted metadata to the user:
 Publishing to MyVibe:
 ──────────────────────
 Title: [extracted title]
-Description: [extracted description]
+
+Description:
+[generated story, 50-150 words]
+
 Visibility: public
 Source: [directory path]
 
