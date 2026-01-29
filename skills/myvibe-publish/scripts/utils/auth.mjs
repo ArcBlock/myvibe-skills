@@ -95,7 +95,7 @@ export async function getAccessToken(hubUrl, locale = "en") {
       connectAction: "gen-simple-access-key",
       source: "MyVibe Publish Skill",
       closeOnSuccess: true,
-      appName: "MyVibe Publish",
+      appName: "MyVibe",
       appLogo:
         "https://www.myvibe.so/image-bin/uploads/bd15c582471327539b56896cde77ad55.svg",
       retry: AUTH_RETRY_COUNT,
@@ -103,6 +103,10 @@ export async function getAccessToken(hubUrl, locale = "en") {
       openPage: async (pageUrl) => {
         const url = new URL(pageUrl);
         url.searchParams.set("locale", locale);
+        const tipsTitleApp = getAgentName();
+        if (tipsTitleApp) {
+          url.searchParams.set("tipsTitleApp", tipsTitleApp);
+        }
 
         const connectUrl = url.toString();
         open(connectUrl);
@@ -154,5 +158,18 @@ export async function handleAuthError(hubUrl, statusCode) {
     console.log(
       chalk.cyan("Please run the publish command again to re-authorize.\n"),
     );
+  }
+}
+
+
+function getAgentName() {
+  if (process.env.CLAUDECODE) {
+    return 'Claude Code';
+  }
+  if (process.env.GEMINI_CLI) {
+    return 'Gemini CLI';
+  }
+  if (process.env.OPENCODE) {
+    return 'OpenCode';
   }
 }
