@@ -35,7 +35,7 @@ Publish web content (HTML file, ZIP archive, or directory) to MyVibe.
 | `--file <path>` | `-f` | Path to HTML file or ZIP archive |
 | `--dir <path>` | `-d` | Directory to compress and publish |
 | `--url <url>` | `-u` | URL to import and publish |
-| `--hub <url>` | `-h` | MyVibe URL (default: https://staging.myvibe.so/) |
+| `--hub <url>` | `-h` | MyVibe URL (default: https://www.myvibe.so/) |
 | `--title <title>` | `-t` | Project title |
 | `--desc <desc>` | | Project description |
 | `--visibility <vis>` | `-v` | Visibility: public or private (default: public) |
@@ -258,7 +258,7 @@ Write a YAML config file with all metadata, then publish:
 source:
   type: dir
   path: ./dist
-hub: https://staging.myvibe.so
+hub: https://www.myvibe.so
 metadata:
   title: My App
   description: A cool web application
@@ -284,7 +284,7 @@ The config file is automatically deleted after successful publish.
 # Publish a directory
 node skills/myvibe-publish/scripts/publish.mjs \
   --dir ./dist \
-  --hub https://staging.myvibe.so \
+  --hub https://www.myvibe.so \
   --title "My App" \
   --desc "A cool app" \
   --visibility public
@@ -292,13 +292,13 @@ node skills/myvibe-publish/scripts/publish.mjs \
 # Publish a file
 node skills/myvibe-publish/scripts/publish.mjs \
   --file ./dist.zip \
-  --hub https://staging.myvibe.so \
+  --hub https://www.myvibe.so \
   --title "My App"
 
 # Import from URL
 node skills/myvibe-publish/scripts/publish.mjs \
   --url https://example.com/my-app \
-  --hub https://staging.myvibe.so
+  --hub https://www.myvibe.so
 ```
 
 **Script Output:**
@@ -306,7 +306,7 @@ node skills/myvibe-publish/scripts/publish.mjs \
 On success:
 ```
 Published successfully!
-URL: https://staging.myvibe.so/{userDid}/{vibeDid}
+URL: https://www.myvibe.so/{userDid}/{vibeDid}
 ```
 
 ### 6. Return Result
@@ -344,7 +344,7 @@ The script handles authorization automatically:
 - Always analyze content before publishing to generate meaningful title/description
 - Never use directory names as title - they are often meaningless
 - Confirm with user before executing publish
-- Default hub is https://staging.myvibe.so/
+- Default hub is https://www.myvibe.so/
 - Local build detection is preprocessing only; server has its own build pipeline
 - Be conservative: if project type is uncertain, publish as-is and let server handle
 - `--dir` specifies target directory and requires full metadata analysis

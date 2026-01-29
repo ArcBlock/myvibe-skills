@@ -97,7 +97,7 @@ export async function getAccessToken(hubUrl, locale = "en") {
       closeOnSuccess: true,
       appName: "MyVibe Publish",
       appLogo:
-        "https://staging.myvibe.so/media-kit/uploads/bd15c582471327539b56896cde77ad55.svg",
+        "https://www.myvibe.so/image-bin/uploads/bd15c582471327539b56896cde77ad55.svg",
       retry: AUTH_RETRY_COUNT,
       fetchInterval: AUTH_FETCH_INTERVAL,
       openPage: async (pageUrl) => {

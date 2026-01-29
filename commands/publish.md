@@ -37,7 +37,7 @@ These arguments are parsed and passed to the skill:
 | `--file <path>` | `-f` | Path to HTML file or ZIP archive |
 | `--dir <path>` | `-d` | Directory to compress and publish |
 | `--url <url>` | `-u` | URL to import and publish |
-| `--hub <url>` | `-h` | MyVibe URL (default: https://staging.myvibe.so/) |
+| `--hub <url>` | `-h` | MyVibe URL (default: https://www.myvibe.so/) |
 | `--title <title>` | `-t` | Project title |
 | `--desc <desc>` | | Project description |
 | `--visibility <vis>` | `-v` | Visibility: public or private (default: public) |

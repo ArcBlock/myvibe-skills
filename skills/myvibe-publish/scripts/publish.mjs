@@ -351,7 +351,7 @@ ${chalk.bold("Config File Format (YAML):")}
   source:
     type: dir
     path: ./dist
-  hub: https://staging.myvibe.so
+  hub: https://www.myvibe.so
   metadata:
     title: My App
     description: A cool app

@@ -86,7 +86,7 @@ npx add-skill ArcBlock/myvibe-skills
 | `--file <path>` | `-f` | HTML 文件或 ZIP 压缩包路径 |
 | `--dir <path>` | `-d` | 要发布的目录 |
 | `--url <url>` | `-u` | 要导入并发布的 URL |
-| `--hub <url>` | `-h` | MyVibe 地址（默认：https://staging.myvibe.so/）|
+| `--hub <url>` | `-h` | MyVibe 地址（默认：https://www.myvibe.so/）|
 | `--title <title>` | `-t` | 项目标题 |
 | `--desc <desc>` | | 项目描述 |
 | `--visibility <vis>` | `-v` | 可见性：public 或 private（默认：public）|

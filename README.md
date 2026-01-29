@@ -86,7 +86,7 @@ You can also use natural language:
 | `--file <path>` | `-f` | Path to HTML file or ZIP archive |
 | `--dir <path>` | `-d` | Directory to publish |
 | `--url <url>` | `-u` | URL to import and publish |
-| `--hub <url>` | `-h` | MyVibe URL (default: https://staging.myvibe.so/) |
+| `--hub <url>` | `-h` | MyVibe URL (default: https://www.myvibe.so/) |
 | `--title <title>` | `-t` | Project title |
 | `--desc <desc>` | | Project description |
 | `--visibility <vis>` | `-v` | Visibility: public or private (default: public) |
