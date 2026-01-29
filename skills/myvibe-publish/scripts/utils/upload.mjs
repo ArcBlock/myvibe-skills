@@ -13,11 +13,19 @@ import { handleAuthError } from "./auth.mjs";
  * @param {string} filePath - Path to the file to upload
  * @param {string} hubUrl - MyVibe URL
  * @param {string} accessToken - Access token
+ * @param {Object} options - Upload options
+ * @param {string} [options.did] - Existing Vibe DID for version update
  * @returns {Promise<{did: string, id: string, status: string}>} - Upload result
  */
-export async function uploadFile(filePath, hubUrl, accessToken) {
+export async function uploadFile(filePath, hubUrl, accessToken, options = {}) {
+  const { did } = options;
   const { origin } = new URL(hubUrl);
-  const uploadEndpoint = joinURL(origin, API_PATHS.UPLOAD);
+
+  // Build upload endpoint with optional did query parameter
+  let uploadEndpoint = joinURL(origin, API_PATHS.UPLOAD);
+  if (did) {
+    uploadEndpoint = `${uploadEndpoint}?did=${encodeURIComponent(did)}`;
+  }
 
   // Get file info
   const fileStat = await stat(filePath);

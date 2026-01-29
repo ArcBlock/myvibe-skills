@@ -26,6 +26,15 @@ Publish web content (HTML file, ZIP archive, or directory) to MyVibe.
 
 # Publish to specific myvibe instance
 /myvibe:myvibe-publish --file ./dist.zip --hub https://custom-hub.com
+
+# Update existing Vibe (auto-detected from previous publish)
+/myvibe:myvibe-publish --dir ./dist
+
+# Force create new Vibe (ignore publish history)
+/myvibe:myvibe-publish --dir ./dist --new
+
+# Explicitly specify Vibe DID to update
+/myvibe:myvibe-publish --dir ./dist --did z2qaXXXXXX
 ```
 
 ## Options
@@ -39,6 +48,8 @@ Publish web content (HTML file, ZIP archive, or directory) to MyVibe.
 | `--title <title>` | `-t` | Project title |
 | `--desc <desc>` | | Project description |
 | `--visibility <vis>` | `-v` | Visibility: public or private (default: public) |
+| `--did <did>` | | Vibe DID for version update (overrides auto-detection) |
+| `--new` | | Force create new Vibe, ignore publish history |
 
 ## Workflow
 
@@ -258,6 +269,7 @@ Write a YAML config file with all metadata, then publish:
 source:
   type: dir
   path: ./dist
+  did: z2qaXXXX  # Optional: explicit DID for version update
 hub: https://www.myvibe.so
 metadata:
   title: My App
@@ -354,3 +366,6 @@ The script handles authorization automatically:
 - All auto-detected metadata should be shown as "suggestions" - user can modify
 - If screenshot fails, skip coverImage and let server auto-generate
 - Use config file method when publishing with extended metadata (tags, coverImage, etc.)
+- Publish history is stored in `~/.myvibe/published.yaml` for automatic version updates
+- When re-publishing the same source path, the existing Vibe DID is automatically used
+- Use `--new` to force create a new Vibe instead of updating existing one

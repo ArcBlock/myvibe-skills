@@ -13,6 +13,7 @@ import { getAccessToken } from "./utils/auth.mjs";
 import { apiPatch, apiGet, subscribeToSSE, pollConversionStatus } from "./utils/http.mjs";
 import { zipDirectory, getFileInfo } from "./utils/zip.mjs";
 import { uploadFile, createVibeFromUrl } from "./utils/upload.mjs";
+import { getPublishHistory, savePublishHistory } from "./utils/history.mjs";
 
 /**
  * Main publish function
@@ -35,6 +36,9 @@ async function publish(options) {
     modelTags,
     // Config file path (for cleanup after publish)
     configPath,
+    // Version control options
+    did: explicitDid,
+    newVibe = false,
   } = options;
 
   let cleanup = null;
@@ -54,6 +58,29 @@ async function publish(options) {
 
     // Get authorization
     const accessToken = await getAccessToken(hub);
+
+    // Resolve source path for history lookup
+    let sourcePath = null;
+    if (dir) {
+      sourcePath = resolve(dir);
+    } else if (file) {
+      sourcePath = resolve(file);
+    } else if (url) {
+      sourcePath = url;
+    }
+
+    // Determine DID for version update
+    let existingDid = null;
+    if (!newVibe) {
+      if (explicitDid) {
+        existingDid = explicitDid;
+      } else if (sourcePath) {
+        const history = await getPublishHistory(sourcePath, hub);
+        if (history) {
+          existingDid = history.did;
+        }
+      }
+    }
 
     let did;
     let needsConversion = false;
@@ -99,8 +126,8 @@ async function publish(options) {
         }
       }
 
-      // Upload file
-      const uploadResult = await uploadFile(filePath, hub, accessToken);
+      // Upload file with optional existing DID for version update
+      const uploadResult = await uploadFile(filePath, hub, accessToken, { did: existingDid });
       did = uploadResult.did;
       needsConversion = uploadResult.status === "PENDING";
     }
@@ -182,6 +209,15 @@ async function publish(options) {
       const vibeUrl = joinURL(hub, vibeInfo.userDid, did);
       console.log(chalk.cyan(`🔗 ${vibeUrl}\n`));
 
+      // Save publish history for future version updates
+      if (sourcePath) {
+        try {
+          await savePublishHistory(sourcePath, hub, did, title || "");
+        } catch (e) {
+          // Ignore history save errors
+        }
+      }
+
       // Delete config file after successful publish
       if (configPath && existsSync(configPath)) {
         try {
@@ -240,6 +276,10 @@ function loadConfigFile(configPath) {
       options.file = config.source.path;
     } else if (config.source.type === "url") {
       options.url = config.source.path;
+    }
+    // Optional explicit DID for version update
+    if (config.source.did) {
+      options.did = config.source.did;
     }
   }
 
@@ -314,6 +354,13 @@ function parseArgs(args) {
         options.visibility = nextArg;
         i++;
         break;
+      case "--did":
+        options.did = nextArg;
+        i++;
+        break;
+      case "--new":
+        options.newVibe = true;
+        break;
       case "--help":
         printHelp();
         process.exit(0);
@@ -345,12 +392,15 @@ ${chalk.bold("Options:")}
   --title, -t <title>     Project title
   --desc <desc>           Project description
   --visibility, -v <vis>  Visibility: public or private (default: public)
+  --did <did>             Vibe DID for version update (overrides auto-detection)
+  --new                   Force create new Vibe, ignore publish history
   --help                  Show this help message
 
 ${chalk.bold("Config File Format (YAML):")}
   source:
     type: dir
     path: ./dist
+    did: z2qaXXXX  # Optional: explicit DID for version update
   hub: https://www.myvibe.so
   metadata:
     title: My App
