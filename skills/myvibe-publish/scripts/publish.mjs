@@ -84,6 +84,7 @@ async function publish(options) {
 
     let did;
     let needsConversion = false;
+    let versionHistoryEnabled;
 
     if (url) {
       // URL import mode
@@ -130,6 +131,7 @@ async function publish(options) {
       const uploadResult = await uploadFile(filePath, hub, accessToken, { did: existingDid });
       did = uploadResult.did;
       needsConversion = uploadResult.status === "PENDING";
+      versionHistoryEnabled = uploadResult.versionHistoryEnabled;
     }
 
     // Wait for conversion if needed
@@ -209,6 +211,13 @@ async function publish(options) {
       const vibeUrl = joinURL(hub, vibeInfo.userDid, did);
       console.log(chalk.cyan(`🔗 ${vibeUrl}\n`));
 
+      // Upgrade prompt: updating existing project + version history not enabled
+      if (existingDid && versionHistoryEnabled === false) {
+        const pricingUrl = joinURL(hub, "pricing");
+        console.log(chalk.yellow("📦 Previous version overwritten. Want to keep version history?"));
+        console.log(chalk.yellow(`   Upgrade to Pro → ${pricingUrl}\n`));
+      }
+
       // Save publish history for future version updates
       if (sourcePath) {
         try {
@@ -251,22 +260,12 @@ async function publish(options) {
 }
 
 /**
- * Load options from config file (YAML format)
- * @param {string} configPath - Path to config YAML file
- * @returns {Object} - Parsed options
+ * Parse config object (shared by file and stdin loaders)
+ * @param {Object} config - Parsed config object
+ * @returns {Object} - Options object
  */
-function loadConfigFile(configPath) {
-  const absolutePath = resolve(configPath);
-  if (!existsSync(absolutePath)) {
-    throw new Error(`Config file not found: ${absolutePath}`);
-  }
-
-  const content = readFileSync(absolutePath, "utf-8");
-  const config = yaml.load(content);
-
-  const options = {
-    configPath: absolutePath, // Store for cleanup after publish
-  };
+function parseConfig(config) {
+  const options = {};
 
   // Parse source
   if (config.source) {
@@ -298,6 +297,69 @@ function loadConfigFile(configPath) {
 
   // Parse hub URL (can be at root level)
   if (config.hub) options.hub = config.hub;
+
+  return options;
+}
+
+/**
+ * Load options from stdin (JSON format)
+ * @returns {Promise<Object>} - Parsed options
+ */
+async function loadConfigFromStdin() {
+  return new Promise((resolve, reject) => {
+    let data = "";
+
+    // Set encoding
+    process.stdin.setEncoding("utf8");
+
+    // Check if stdin has data (not a TTY)
+    if (process.stdin.isTTY) {
+      reject(new Error("No data provided via stdin. Use: echo '{...}' | node publish.mjs --config-stdin"));
+      return;
+    }
+
+    process.stdin.on("data", (chunk) => {
+      data += chunk;
+    });
+
+    process.stdin.on("end", () => {
+      try {
+        const config = JSON.parse(data);
+        resolve(parseConfig(config));
+      } catch (e) {
+        reject(new Error(`Failed to parse JSON from stdin: ${e.message}`));
+      }
+    });
+
+    process.stdin.on("error", (err) => {
+      reject(new Error(`Failed to read from stdin: ${err.message}`));
+    });
+
+    // Timeout after 5 seconds if no data
+    setTimeout(() => {
+      if (!data) {
+        reject(new Error("Timeout waiting for stdin data"));
+      }
+    }, 5000);
+  });
+}
+
+/**
+ * Load options from config file (YAML format)
+ * @param {string} configPath - Path to config YAML file
+ * @returns {Object} - Parsed options
+ */
+function loadConfigFile(configPath) {
+  const absolutePath = resolve(configPath);
+  if (!existsSync(absolutePath)) {
+    throw new Error(`Config file not found: ${absolutePath}`);
+  }
+
+  const content = readFileSync(absolutePath, "utf-8");
+  const config = yaml.load(content);
+
+  const options = parseConfig(config);
+  options.configPath = absolutePath; // Store for cleanup after publish
 
   return options;
 }
@@ -361,6 +423,9 @@ function parseArgs(args) {
       case "--new":
         options.newVibe = true;
         break;
+      case "--config-stdin":
+        options.configStdin = true;
+        break;
       case "--help":
         printHelp();
         process.exit(0);
@@ -385,6 +450,7 @@ ${chalk.bold("Usage:")}
 
 ${chalk.bold("Options:")}
   --config, -c <path>     Load options from YAML config file
+  --config-stdin          Load options from stdin (JSON format)
   --file, -f <path>       Path to HTML file or ZIP archive
   --dir, -d <path>        Directory to compress and publish
   --url, -u <url>         URL to import and publish
@@ -416,6 +482,9 @@ ${chalk.bold("Config File Format (YAML):")}
 ${chalk.bold("Examples:")}
   # Publish using config file
   node publish.mjs --config ./publish-config.yaml
+
+  # Publish using stdin (no file needed)
+  echo '{"source":{"type":"dir","path":"./dist"},"metadata":{"title":"My App"}}' | node publish.mjs --config-stdin
 
   # Publish a ZIP file
   node publish.mjs --file ./dist.zip --title "My App"
@@ -454,14 +523,22 @@ if (isMainModule()) {
 
   const options = parseArgs(args);
 
-  publish(options)
-    .then((result) => {
+  // Handle --config-stdin asynchronously
+  (async () => {
+    try {
+      if (options.configStdin) {
+        const stdinOptions = await loadConfigFromStdin();
+        Object.assign(options, stdinOptions);
+        delete options.configStdin;
+      }
+
+      const result = await publish(options);
       process.exit(result.success ? 0 : 1);
-    })
-    .catch((error) => {
+    } catch (error) {
       console.error(chalk.red(`Fatal error: ${error.message}`));
       process.exit(1);
-    });
+    }
+  })();
 }
 
 export default publish;

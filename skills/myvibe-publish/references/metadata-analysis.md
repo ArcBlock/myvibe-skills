@@ -122,45 +122,39 @@ If no creation context is available, leave empty.
 
 ## Step 4: Generate Screenshot
 
-**CRITICAL: Execute each step as a SEPARATE Bash call to avoid timing issues.**
-
-### 4.1 Check agent-browser
+**Single command - handles everything automatically:**
 
 ```bash
-which agent-browser || npm install -g agent-browser && agent-browser install
+node skills/myvibe-publish/scripts/utils/generate-screenshot.mjs --dir {publish_target_dir} --hub {hub}
 ```
 
-### 4.2 Start server (separate call)
+The script automatically:
+1. Checks agent-browser installation
+2. Finds an available port (auto-retry if default port is in use)
+3. Starts local http-server
+4. Takes screenshot with agent-browser
+5. Uploads to MyVibe
+6. Cleans up (stops server, closes browser)
 
-```bash
-npx -y http-server {dir} -p 3456 &
+**Returns JSON on success:**
+```json
+{
+  "success": true,
+  "url": "https://...",
+  "screenshotPath": "/tmp/myvibe-screenshot.png"
+}
 ```
 
-### 4.3 Wait for server (separate call)
-
-```bash
-sleep 3 && curl -s http://localhost:3456 | head -1
+**Returns JSON on error:**
+```json
+{
+  "success": false,
+  "error": "Error description",
+  "suggestion": "How to fix it"
+}
 ```
 
-### 4.4 Take screenshot (separate call)
-
-```bash
-agent-browser open http://localhost:3456 && agent-browser screenshot /tmp/cover-screenshot.png && agent-browser close
-```
-
-### 4.5 Upload screenshot
-
-```bash
-node scripts/utils/upload-image.mjs --file /tmp/cover-screenshot.png --hub {hub}
-```
-
-### 4.6 Stop server (separate call)
-
-```bash
-pkill -f "http-server.*3456" 2>/dev/null || true
-```
-
-**Fallback:** If screenshot fails, skip coverImage. Server will auto-generate.
+**If screenshot fails:** Use the `suggestion` field to attempt fix and retry, or skip coverImage and let server auto-generate.
 
 ---
 

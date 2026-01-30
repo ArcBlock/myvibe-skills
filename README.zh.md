@@ -53,30 +53,30 @@ npx add-skill ArcBlock/myvibe-skills
 将 Web 内容（HTML 文件、ZIP 压缩包或目录）发布到 MyVibe。
 
 ```bash
-# 发布当前目录（自动检测项目类型）
-/myvibe:publish
+# 使用自然语言描述你想发布的内容
+/myvibe-publish 把这个项目发布到 MyVibe
 
-# 发布指定目录
-/myvibe:publish --dir ./dist
+/myvibe-publish 把 ./dist 目录发布到 MyVibe
 
-# 发布 ZIP 文件
-/myvibe:publish --file ./dist.zip
+/myvibe-publish 把 ./index.html 文件发布到 MyVibe
 
-# 发布单个 HTML 文件
-/myvibe:publish --file ./index.html
-
-# 从 URL 导入并发布
-/myvibe:publish --url https://example.com/my-app
+/myvibe-publish 把 ./dist.zip 文件发布到 MyVibe
 ```
 
-也可以使用自然语言：
+也可以使用命令行选项：
 
 ```bash
-/myvibe:publish 把这个项目发布到 MyVibe
+# 发布当前目录（自动检测项目类型）
+/myvibe-publish
 
-/myvibe:publish 帮我把 dist 目录发布上去
+# 发布指定目录
+/myvibe-publish --dir ./dist
 
-/myvibe:publish 部署我的网站到 myvibe.so
+# 发布 ZIP 文件
+/myvibe-publish --file ./dist.zip
+
+# 发布单个 HTML 文件
+/myvibe-publish --file ./index.html
 ```
 
 **选项：**
@@ -85,7 +85,6 @@ npx add-skill ArcBlock/myvibe-skills
 |------|------|------|
 | `--file <path>` | `-f` | HTML 文件或 ZIP 压缩包路径 |
 | `--dir <path>` | `-d` | 要发布的目录 |
-| `--url <url>` | `-u` | 要导入并发布的 URL |
 | `--hub <url>` | `-h` | MyVibe 地址（默认：https://www.myvibe.so/）|
 | `--title <title>` | `-t` | 项目标题 |
 | `--desc <desc>` | | 项目描述 |

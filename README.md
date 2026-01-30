@@ -53,30 +53,30 @@ Simply tell Claude Code:
 Publish web content (HTML file, ZIP archive, or directory) to MyVibe.
 
 ```bash
-# Publish current directory (auto-detect project type)
-/myvibe:publish
+# Use natural language to describe what you want to publish
+/myvibe-publish Publish this project to MyVibe
 
-# Publish a specific directory
-/myvibe:publish --dir ./dist
+/myvibe-publish Publish the ./dist directory to MyVibe
 
-# Publish a ZIP file
-/myvibe:publish --file ./dist.zip
+/myvibe-publish Publish the ./index.html file to MyVibe
 
-# Publish a single HTML file
-/myvibe:publish --file ./index.html
-
-# Import and publish from URL
-/myvibe:publish --url https://example.com/my-app
+/myvibe-publish Publish the ./dist.zip file to MyVibe
 ```
 
-You can also use natural language:
+You can also use command-line options:
 
 ```bash
-/myvibe:publish Publish this project to MyVibe
+# Publish current directory (auto-detect project type)
+/myvibe-publish
 
-/myvibe:publish Help me publish the dist folder
+# Publish a specific directory
+/myvibe-publish --dir ./dist
 
-/myvibe:publish Deploy my website to myvibe.so
+# Publish a ZIP file
+/myvibe-publish --file ./dist.zip
+
+# Publish a single HTML file
+/myvibe-publish --file ./index.html
 ```
 
 **Options:**
@@ -85,7 +85,6 @@ You can also use natural language:
 |--------|-------|-------------|
 | `--file <path>` | `-f` | Path to HTML file or ZIP archive |
 | `--dir <path>` | `-d` | Directory to publish |
-| `--url <url>` | `-u` | URL to import and publish |
 | `--hub <url>` | `-h` | MyVibe URL (default: https://www.myvibe.so/) |
 | `--title <title>` | `-t` | Project title |
 | `--desc <desc>` | | Project description |

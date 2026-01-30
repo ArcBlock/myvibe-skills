@@ -164,6 +164,7 @@ export async function uploadFile(filePath, hubUrl, accessToken, options = {}) {
     id: blocklet.id,
     status: blocklet.status,
     isNewUpload: blocklet.isNewUpload,
+    versionHistoryEnabled: blocklet.versionHistoryEnabled,
   };
 }
 

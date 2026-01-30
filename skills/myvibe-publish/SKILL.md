@@ -53,10 +53,15 @@ Publish web content (HTML file, ZIP archive, or directory) to MyVibe.
 
 ## Workflow
 
-**CRITICAL: You MUST read reference files before starting analysis**
+**CRITICAL: Parallel Execution for Efficiency**
 
-Before starting any analysis, you MUST use the Read tool to read:
-- `references/metadata-analysis.md` - Detailed metadata extraction and tags matching workflow
+On the FIRST tool call, execute ALL of the following in parallel (single tool call with multiple operations):
+- `Read`: `references/metadata-analysis.md` (workflow reference)
+- `Read`: source file (if `--file`) or main files in directory
+- `Bash`: `git remote get-url origin 2>/dev/null || echo "Not a git repo"` (check GitHub)
+- `Bash`: `node {skill_path}/scripts/utils/fetch-tags.mjs --hub {hub}` (fetch available tags)
+
+This reduces multiple round-trips to a single parallel call.
 
 ### Workflow Overview
 
@@ -256,39 +261,35 @@ Only after user confirmation in Step 4, execute the publish script.
 2. If not exists: run `npm install` first
 3. If publish fails with module errors: run `npm install` and retry
 
-**Method 1: Using Config File (Recommended for full metadata)**
+**Method 1: Using stdin (Recommended - no file writing needed)**
 
-Write a YAML config file with all metadata, then publish:
-
-```bash
-# Write config file in current directory
-# File: ./publish-config.yaml
-```
-
-```yaml
-source:
-  type: dir
-  path: ./dist
-  did: z2qaXXXX  # Optional: explicit DID for version update
-hub: https://www.myvibe.so
-metadata:
-  title: My App
-  description: A cool web application
-  visibility: public
-  coverImage: https://...
-  githubRepo: https://github.com/user/repo
-  platformTags: [1, 2]
-  techStackTags: [3, 4, 5]
-  categoryTags: [6]
-  modelTags: [7]
-```
+Pass JSON config via stdin using heredoc:
 
 ```bash
-# Publish using config file
-node skills/myvibe-publish/scripts/publish.mjs --config ./publish-config.yaml
+node skills/myvibe-publish/scripts/publish.mjs --config-stdin <<'EOF'
+{
+  "source": {
+    "type": "dir",
+    "path": "./dist",
+    "did": "z2qaXXXX"
+  },
+  "hub": "https://www.myvibe.so",
+  "metadata": {
+    "title": "My App",
+    "description": "A cool web application",
+    "visibility": "public",
+    "coverImage": "https://...",
+    "githubRepo": "https://github.com/user/repo",
+    "platformTags": [1, 2],
+    "techStackTags": [3, 4, 5],
+    "categoryTags": [6],
+    "modelTags": [7]
+  }
+}
+EOF
 ```
 
-The config file is automatically deleted after successful publish.
+Note: `did` in source is optional - only needed for explicit version updates.
 
 **Method 2: Command Line Arguments (Simple cases)**
 
@@ -321,10 +322,29 @@ Published successfully!
 URL: https://www.myvibe.so/{userDid}/{vibeDid}
 ```
 
+For non-paid users updating existing projects (version history not enabled):
+```
+📦 Previous version overwritten. Want to keep version history?
+   Upgrade to Pro → {hub}/pricing
+```
+
+The pricing URL is dynamically constructed based on the hub parameter.
+
 ### 6. Return Result
 
-- On success: Show the published URL to the user
-- On failure: Show the error message and suggest solutions
+**On success**, display in this format:
+
+```
+Published successfully!
+
+🔗 [published URL]
+
+[If upgrade prompt appeared in script output, display it exactly as shown:]
+📦 Previous version overwritten. Want to keep version history?
+   Upgrade to Pro → {hub}/pricing
+```
+
+**On failure**: Show the error message and suggest solutions based on the Error Handling table.
 
 ## Error Handling
 
