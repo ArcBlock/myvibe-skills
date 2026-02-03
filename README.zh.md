@@ -20,14 +20,14 @@
 </p>
 
 一个将 Web 项目发布到 [MyVibe](https://www.myvibe.so) 的 AI Skill。
-自动检测项目类型、按需构建、无缝部署。
+自动检测项目类型、按需构建、无缝发布。
 
 ## 什么是 MyVibe？
 
-[MyVibe](https://www.myvibe.so) 是一个即时部署 AI 生成 Web 项目的平台。无论你使用 Claude Code、Cursor、Codex、Windsurf 还是其他 AI 编程助手，MyVibe 都能让你在几秒内将作品发布到永久 URL。
+[MyVibe](https://www.myvibe.so) 是一个即时发布 AI 生成 Web 项目的平台。无论你使用 Claude Code、Cursor、Codex、Windsurf 还是其他 AI 编程助手，MyVibe 都能让你在几秒内将作品发布到永久 URL。
 
 **核心亮点：**
-- 60 秒内完成部署
+- 60 秒内完成发布
 - 永久可访问的 URL
 - 支持任何静态 Web 项目
 - 探索和发现社区创作
