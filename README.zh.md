@@ -6,7 +6,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FArcBlock%2Fmyvibe-skills%2Fmain%2F.claude-plugin%2Fmarketplace.json&query=%24.metadata.version&label=version&style=for-the-badge&color=blue" alt="Version">
-  <img src="https://img.shields.io/badge/Claude_Code-Skill-blueviolet?style=for-the-badge" alt="Claude Code Skill">
+  <img src="https://img.shields.io/badge/Agent_Skill-blueviolet?style=for-the-badge" alt="Agent Skill">
   <a href="https://github.com/ArcBlock/myvibe-skills/blob/main/LICENSE.md">
     <img src="https://img.shields.io/badge/license-ELv2-green?style=for-the-badge" alt="License">
   </a>
@@ -24,7 +24,7 @@
 
 ## 什么是 MyVibe？
 
-[MyVibe](https://www.myvibe.so) 是一个即时部署 AI 生成 Web 项目的平台。无论你使用 Claude、v0、Lovable、Bolt 还是其他 AI 工具构建项目，MyVibe 都能让你在几秒内将作品发布到永久 URL。
+[MyVibe](https://www.myvibe.so) 是一个即时部署 AI 生成 Web 项目的平台。无论你使用 Claude Code、Cursor、Codex、Windsurf 还是其他 AI 编程助手，MyVibe 都能让你在几秒内将作品发布到永久 URL。
 
 **核心亮点：**
 - 60 秒内完成部署
@@ -55,21 +55,20 @@ flowchart LR
 | **封面图片** | 自动生成截图作为封面 |
 | **标签匹配** | 从 MyVibe 平台智能推荐标签 |
 
-## 前置条件
-
-- 支持 Skill 的 AI 编程助手（如 [Claude Code](https://docs.anthropic.com/en/docs/claude-code)）
-
 ## 安装
-
-### 快速安装（推荐）
 
 ```bash
 npx skills add ArcBlock/myvibe-skills
 ```
 
-### 通过插件市场（Claude Code）
+> 基于 [skills](https://github.com/vercel-labs/skills) — 支持 Claude Code、Cursor、Codex、Gemini CLI 及 [35+ 更多 Agent](https://github.com/vercel-labs/skills#supported-agents)。
 
-在 Claude Code 中运行：
+或者直接告诉你的 AI 编程助手：
+
+> 请从 github.com/ArcBlock/myvibe-skills 安装 Skills
+
+<details>
+<summary><b>通过 Claude Code 插件市场安装</b></summary>
 
 ```bash
 # 注册市场
@@ -79,11 +78,7 @@ npx skills add ArcBlock/myvibe-skills
 /plugin install myvibe@myvibe-skills
 ```
 
-### 让 Agent 帮你安装
-
-直接告诉 Claude Code：
-
-> 请从 github.com/ArcBlock/myvibe-skills 安装 Skills
+</details>
 
 ## 快速开始
 
@@ -135,7 +130,7 @@ npx skills add ArcBlock/myvibe-skills
 - 静态站点（HTML/CSS/JS）
 - Vite、Next.js、Astro、Nuxt 等框架的构建产物
 - 包含 Web 内容的 ZIP 压缩包
-- AI 工具生成的项目（Claude、v0、Lovable、Bolt）
+- AI 编程助手生成的项目
 
 </details>
 
