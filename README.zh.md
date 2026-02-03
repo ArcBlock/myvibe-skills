@@ -7,6 +7,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FArcBlock%2Fmyvibe-skills%2Fmain%2F.claude-plugin%2Fmarketplace.json&query=%24.metadata.version&label=version&style=for-the-badge&color=blue" alt="Version">
   <img src="https://img.shields.io/badge/Agent_Skill-blueviolet?style=for-the-badge" alt="Agent Skill">
+  <img src="https://img.shields.io/badge/MCP-Compatible-blue?style=for-the-badge" alt="MCP Compatible">
   <a href="https://github.com/ArcBlock/myvibe-skills/blob/main/LICENSE.md">
     <img src="https://img.shields.io/badge/license-ELv2-green?style=for-the-badge" alt="License">
   </a>
