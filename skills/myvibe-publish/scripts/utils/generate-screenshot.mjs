@@ -5,7 +5,7 @@ import { spawn, execSync } from "node:child_process";
 import path from "node:path";
 import chalk from "chalk";
 
-import { VIBE_HUB_URL_DEFAULT, getScreenshotResultPath } from "./constants.mjs";
+import { VIBE_HUB_URL_DEFAULT, getScreenshotResultPath, isMainModule } from "./constants.mjs";
 import { uploadImage } from "./upload-image.mjs";
 
 const DEFAULT_PORT = 3456;
@@ -533,7 +533,7 @@ ${chalk.bold("Examples:")}
 }
 
 // CLI entry point
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isMainModule(import.meta.url)) {
   const args = process.argv.slice(2);
 
   if (args.length === 0) {

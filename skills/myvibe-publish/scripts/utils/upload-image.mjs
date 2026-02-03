@@ -6,7 +6,7 @@ import path from "node:path";
 import chalk from "chalk";
 import { joinURL } from "ufo";
 
-import { VIBE_HUB_URL_DEFAULT } from "./constants.mjs";
+import { VIBE_HUB_URL_DEFAULT, isMainModule } from "./constants.mjs";
 import { getAccessToken } from "./auth.mjs";
 
 // Media Kit component DID for image uploads
@@ -291,7 +291,7 @@ ${chalk.bold("Examples:")}
 }
 
 // CLI entry point
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isMainModule(import.meta.url)) {
   const args = process.argv.slice(2);
 
   if (args.length === 0) {

@@ -1,7 +1,9 @@
 // MyVibe publish constants
 
 import { createHash } from "node:crypto";
+import { realpathSync } from "node:fs";
 import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 // Default MyVibe URL
 export const VIBE_HUB_URL_DEFAULT = "https://www.myvibe.so";
@@ -52,6 +54,22 @@ export const HTML_EXTENSIONS = [".html", ".htm"];
  * @param {string} sourcePath - The source path (dir or file) being published
  * @returns {string} - Path to screenshot result file: /tmp/myvibe-screenshot-{hash}.json
  */
+/**
+ * Check if the current module is the main entry point.
+ * Handles symlinks by comparing real paths.
+ * @param {string} metaUrl - import.meta.url of the calling module
+ * @returns {boolean}
+ */
+export function isMainModule(metaUrl) {
+  try {
+    const scriptPath = fileURLToPath(metaUrl);
+    const argvPath = resolve(process.argv[1]);
+    return realpathSync(scriptPath) === realpathSync(argvPath);
+  } catch {
+    return false;
+  }
+}
+
 export function getScreenshotResultPath(sourcePath) {
   const absolutePath = resolve(sourcePath);
   const hash = createHash("md5").update(absolutePath).digest("hex").slice(0, 8);

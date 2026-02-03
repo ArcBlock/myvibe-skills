@@ -6,7 +6,7 @@ import { join } from "node:path";
 import crypto from "node:crypto";
 import chalk from "chalk";
 
-import { VIBE_HUB_URL_DEFAULT } from "./constants.mjs";
+import { VIBE_HUB_URL_DEFAULT, isMainModule } from "./constants.mjs";
 
 // Cache configuration
 const CACHE_DIR = join(homedir(), ".myvibe", "cache");
@@ -270,7 +270,7 @@ ${chalk.bold("Examples:")}
 }
 
 // CLI entry point
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isMainModule(import.meta.url)) {
   const args = process.argv.slice(2);
   const options = parseArgs(args);
 

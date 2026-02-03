@@ -1,7 +1,11 @@
 # MyVibe Skills
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.0.12-blue?style=for-the-badge" alt="Version">
+  <img src="./logo.svg" alt="MyVibe Skills" width="120">
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FArcBlock%2Fmyvibe-skills%2Fmain%2F.claude-plugin%2Fmarketplace.json&query=%24.metadata.version&label=version&style=for-the-badge&color=blue" alt="Version">
   <img src="https://img.shields.io/badge/Claude_Code-Skill-blueviolet?style=for-the-badge" alt="Claude Code Skill">
   <a href="https://github.com/ArcBlock/myvibe-skills/blob/main/LICENSE.md">
     <img src="https://img.shields.io/badge/license-ELv2-green?style=for-the-badge" alt="License">
@@ -15,7 +19,7 @@
   English | <a href="./README.zh.md">中文</a>
 </p>
 
-Publish your web projects to [MyVibe](https://www.myvibe.so) with a single command.
+An AI skill that publishes your web projects to [MyVibe](https://www.myvibe.so).
 Auto-detects project type, builds if needed, and deploys seamlessly.
 
 ## What is MyVibe?
@@ -46,9 +50,10 @@ flowchart LR
 |---------|-------------|
 | **Smart Detection** | Auto-detect Static, Vite, Next.js, Astro, Nuxt, Monorepo |
 | **Build Integration** | Supports npm, pnpm, yarn, bun |
-| **Metadata Extraction** | Title, description from HTML/package.json/README |
+| **Metadata Extraction** | Title, description, tags from HTML/package.json/README |
 | **Version Control** | Auto-track and update existing Vibes |
 | **Cover Image** | Auto-generate screenshot as cover |
+| **Tag Matching** | Smart tag suggestions from MyVibe hub |
 
 ## Prerequisites
 
@@ -82,46 +87,30 @@ Simply tell Claude Code:
 
 ## Quick Start
 
-Just describe what you want:
+Just tell your AI assistant what you want in natural language:
 
-```bash
+```
 /myvibe-publish Publish this project to MyVibe
+```
+
+```
+/myvibe-publish Publish the ./dist directory to MyVibe
+```
+
+```
+/myvibe-publish Publish index.html as a private Vibe
+```
+
+```
+/myvibe-publish Publish the ./dist.zip file to MyVibe
 ```
 
 That's it! The skill handles detection, building, and publishing automatically.
 
 <details>
-<summary><b>More Examples</b></summary>
+<summary><b>Advanced Options</b></summary>
 
-```bash
-# Publish a specific directory
-/myvibe-publish Publish the ./dist directory to MyVibe
-
-# Publish a single HTML file
-/myvibe-publish Publish the ./index.html file to MyVibe
-
-# Publish a ZIP archive
-/myvibe-publish Publish the ./dist.zip file to MyVibe
-```
-
-</details>
-
-<details>
-<summary><b>Command Options</b></summary>
-
-```bash
-# Publish current directory (auto-detect project type)
-/myvibe-publish
-
-# Publish a specific directory
-/myvibe-publish --dir ./dist
-
-# Publish a ZIP file
-/myvibe-publish --file ./dist.zip
-
-# Publish a single HTML file
-/myvibe-publish --file ./index.html
-```
+You can also pass options explicitly:
 
 | Option | Alias | Description |
 |--------|-------|-------------|
@@ -164,6 +153,10 @@ The skill auto-detects buildable projects (Vite, Next.js, Astro, etc.) and promp
 
 </details>
 
+## Contributing
+
+Contributions are welcome! Please open an [issue](https://github.com/ArcBlock/myvibe-skills/issues) or submit a pull request.
+
 ## Related Projects
 
 - [MyVibe](https://www.myvibe.so) - AI-powered web project hosting platform
@@ -175,7 +168,7 @@ The skill auto-detects buildable projects (Vite, Next.js, Astro, etc.) and promp
 
 ## Author
 
-**ArcBlock** - [blocklet@arcblock.io](mailto:blocklet@arcblock.io)
+[ArcBlock](https://www.arcblock.io) - Building decentralized identity and Web3 infrastructure.
 
 GitHub: [@ArcBlock](https://github.com/ArcBlock)
 

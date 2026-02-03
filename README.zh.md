@@ -1,7 +1,11 @@
 # MyVibe Skills
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.0.12-blue?style=for-the-badge" alt="Version">
+  <img src="./logo.svg" alt="MyVibe Skills" width="120">
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FArcBlock%2Fmyvibe-skills%2Fmain%2F.claude-plugin%2Fmarketplace.json&query=%24.metadata.version&label=version&style=for-the-badge&color=blue" alt="Version">
   <img src="https://img.shields.io/badge/Claude_Code-Skill-blueviolet?style=for-the-badge" alt="Claude Code Skill">
   <a href="https://github.com/ArcBlock/myvibe-skills/blob/main/LICENSE.md">
     <img src="https://img.shields.io/badge/license-ELv2-green?style=for-the-badge" alt="License">
@@ -15,7 +19,7 @@
   <a href="./README.md">English</a> | 中文
 </p>
 
-一条命令将 Web 项目发布到 [MyVibe](https://www.myvibe.so)。
+一个将 Web 项目发布到 [MyVibe](https://www.myvibe.so) 的 AI Skill。
 自动检测项目类型、按需构建、无缝部署。
 
 ## 什么是 MyVibe？
@@ -46,9 +50,10 @@ flowchart LR
 |------|------|
 | **智能检测** | 自动识别 Static、Vite、Next.js、Astro、Nuxt、Monorepo |
 | **构建集成** | 支持 npm、pnpm、yarn、bun |
-| **元数据提取** | 从 HTML/package.json/README 提取标题和描述 |
+| **元数据提取** | 从 HTML/package.json/README 提取标题、描述和标签 |
 | **版本管理** | 自动追踪并更新已发布的 Vibe |
 | **封面图片** | 自动生成截图作为封面 |
+| **标签匹配** | 从 MyVibe 平台智能推荐标签 |
 
 ## 前置条件
 
@@ -82,46 +87,30 @@ npx skills add ArcBlock/myvibe-skills
 
 ## 快速开始
 
-用自然语言描述你想做的事：
+用自然语言告诉 AI 助手你想做什么：
 
-```bash
+```
 /myvibe-publish 把这个项目发布到 MyVibe
+```
+
+```
+/myvibe-publish 把 ./dist 目录发布到 MyVibe
+```
+
+```
+/myvibe-publish 把 index.html 以私有方式发布
+```
+
+```
+/myvibe-publish 把 ./dist.zip 文件发布到 MyVibe
 ```
 
 就这么简单！Skill 会自动处理检测、构建和发布。
 
 <details>
-<summary><b>更多示例</b></summary>
+<summary><b>高级选项</b></summary>
 
-```bash
-# 发布指定目录
-/myvibe-publish 把 ./dist 目录发布到 MyVibe
-
-# 发布单个 HTML 文件
-/myvibe-publish 把 ./index.html 文件发布到 MyVibe
-
-# 发布 ZIP 压缩包
-/myvibe-publish 把 ./dist.zip 文件发布到 MyVibe
-```
-
-</details>
-
-<details>
-<summary><b>命令选项</b></summary>
-
-```bash
-# 发布当前目录（自动检测项目类型）
-/myvibe-publish
-
-# 发布指定目录
-/myvibe-publish --dir ./dist
-
-# 发布 ZIP 文件
-/myvibe-publish --file ./dist.zip
-
-# 发布单个 HTML 文件
-/myvibe-publish --file ./index.html
-```
+你也可以显式传递参数：
 
 | 选项 | 简写 | 说明 |
 |------|------|------|
@@ -164,6 +153,10 @@ Skill 会自动检测需要构建的项目（Vite、Next.js、Astro 等），并
 
 </details>
 
+## 参与贡献
+
+欢迎贡献！请提交 [Issue](https://github.com/ArcBlock/myvibe-skills/issues) 或 Pull Request。
+
 ## 相关项目
 
 - [MyVibe](https://www.myvibe.so) - AI 驱动的 Web 项目托管平台
@@ -175,7 +168,7 @@ Skill 会自动检测需要构建的项目（Vite、Next.js、Astro 等），并
 
 ## 作者
 
-**ArcBlock** - [blocklet@arcblock.io](mailto:blocklet@arcblock.io)
+[ArcBlock](https://www.arcblock.io) - 构建去中心化身份与 Web3 基础设施。
 
 GitHub: [@ArcBlock](https://github.com/ArcBlock)
 
