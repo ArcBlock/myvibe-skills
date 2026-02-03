@@ -59,9 +59,18 @@ Publish web content (HTML file, ZIP archive, or directory) to MyVibe.
 | Has `index.html` at root, no `package.json` | **Static** | → Start screenshot, then Step 3 |
 
 **Start screenshot for non-build projects** (run_in_background: true):
+
+For directory source (`--dir`):
 ```bash
 node {skill_path}/scripts/utils/generate-screenshot.mjs --dir {publish_target} --hub {hub}
 ```
+
+For single file source (`--file`):
+```bash
+node {skill_path}/scripts/utils/generate-screenshot.mjs --file {publish_target} --hub {hub}
+```
+
+IMPORTANT: Use `--file` when the source is a single HTML file, and `--dir` when it is a directory. The flag must match the `source.type` in the publish config so that both scripts calculate the same hash for the screenshot result file.
 
 ---
 
