@@ -1,69 +1,113 @@
 # MyVibe Skills
 
-English | [中文](./README.zh.md)
+<p align="center">
+  <img src="https://img.shields.io/badge/version-0.0.12-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Claude_Code-Skill-blueviolet?style=for-the-badge" alt="Claude Code Skill">
+  <a href="https://github.com/ArcBlock/myvibe-skills/blob/main/LICENSE.md">
+    <img src="https://img.shields.io/badge/license-ELv2-green?style=for-the-badge" alt="License">
+  </a>
+  <a href="https://github.com/ArcBlock/myvibe-skills/stargazers">
+    <img src="https://img.shields.io/github/stars/ArcBlock/myvibe-skills?style=for-the-badge" alt="GitHub Stars">
+  </a>
+</p>
 
-Claude Code Skills for publishing web content to [MyVibe](https://github.com/ArcBlock/myvibe-skills).
+<p align="center">
+  English | <a href="./README.zh.md">中文</a>
+</p>
+
+Publish your web projects to [MyVibe](https://www.myvibe.so) with a single command.
+Auto-detects project type, builds if needed, and deploys seamlessly.
+
+## What is MyVibe?
+
+[MyVibe](https://www.myvibe.so) is a platform for instantly deploying AI-generated web projects. Whether you're building with Claude, v0, Lovable, Bolt, or any other AI tool, MyVibe lets you publish your creations to a permanent URL in seconds.
+
+**Key highlights:**
+- Deploy in under 60 seconds
+- Permanent URLs for your projects
+- Support for any static web project
+- Explore and discover community creations
+
+## How it Works
+
+```mermaid
+flowchart LR
+    A[Detect Project Type] --> B[Build if needed]
+    B --> C[Publish to MyVibe]
+
+    A -.- A1[Static/Vite/Next.js/Astro]
+    B -.- B1[npm/pnpm/yarn/bun]
+    C -.- C1[Auto metadata & screenshot]
+```
+
+## Features
+
+| Feature | Description |
+|---------|-------------|
+| **Smart Detection** | Auto-detect Static, Vite, Next.js, Astro, Nuxt, Monorepo |
+| **Build Integration** | Supports npm, pnpm, yarn, bun |
+| **Metadata Extraction** | Title, description from HTML/package.json/README |
+| **Version Control** | Auto-track and update existing Vibes |
+| **Cover Image** | Auto-generate screenshot as cover |
 
 ## Prerequisites
 
-- [Claude Code](https://claude.com/claude-code) installed
+- AI coding assistant with skill support (e.g., [Claude Code](https://docs.anthropic.com/en/docs/claude-code))
 
 ## Installation
 
 ### Quick Install (Recommended)
 
 ```bash
-npx add-skill ArcBlock/myvibe-skills
+npx skills add ArcBlock/myvibe-skills
 ```
 
-### Register as Plugin Marketplace
+### Via Plugin Marketplace (Claude Code)
 
-Run the following command in Claude Code:
+Run in Claude Code:
 
 ```bash
+# Register marketplace
 /plugin marketplace add ArcBlock/myvibe-skills
-```
 
-### Install Skills
-
-**Option 1: Via Browse UI**
-
-1. Select **Browse and install plugins**
-2. Select **myvibe-skills**
-3. Select the plugin(s) you want to install
-4. Select **Install now**
-
-**Option 2: Direct Install**
-
-```bash
-# Install specific plugin
+# Install plugin
 /plugin install myvibe@myvibe-skills
 ```
 
-**Option 3: Ask the Agent**
+### Ask the Agent
 
 Simply tell Claude Code:
 
 > Please install Skills from github.com/ArcBlock/myvibe-skills
 
-## Usage
+## Quick Start
 
-### Publish Command
-
-Publish web content (HTML file, ZIP archive, or directory) to MyVibe.
+Just describe what you want:
 
 ```bash
-# Use natural language to describe what you want to publish
 /myvibe-publish Publish this project to MyVibe
+```
 
+That's it! The skill handles detection, building, and publishing automatically.
+
+<details>
+<summary><b>More Examples</b></summary>
+
+```bash
+# Publish a specific directory
 /myvibe-publish Publish the ./dist directory to MyVibe
 
+# Publish a single HTML file
 /myvibe-publish Publish the ./index.html file to MyVibe
 
+# Publish a ZIP archive
 /myvibe-publish Publish the ./dist.zip file to MyVibe
 ```
 
-You can also use command-line options:
+</details>
+
+<details>
+<summary><b>Command Options</b></summary>
 
 ```bash
 # Publish current directory (auto-detect project type)
@@ -79,8 +123,6 @@ You can also use command-line options:
 /myvibe-publish --file ./index.html
 ```
 
-**Options:**
-
 | Option | Alias | Description |
 |--------|-------|-------------|
 | `--file <path>` | `-f` | Path to HTML file or ZIP archive |
@@ -89,17 +131,47 @@ You can also use command-line options:
 | `--title <title>` | `-t` | Project title |
 | `--desc <desc>` | | Project description |
 | `--visibility <vis>` | `-v` | Visibility: public or private (default: public) |
+| `--did <did>` | | Vibe DID for version update |
+| `--new` | | Force create new Vibe, ignore history |
 
-**Features:**
+</details>
 
-- Auto-detect project type (Static, Pre-built, Buildable, Monorepo)
-- Smart build detection with user confirmation
-- Extract metadata from HTML, package.json, README
-- Support multiple package managers (npm, pnpm, yarn, bun)
+## FAQ
+
+<details>
+<summary><b>What types of projects can I publish?</b></summary>
+
+Any static web project can be published, including:
+- Single HTML files
+- Static sites (HTML/CSS/JS)
+- Built output from Vite, Next.js, Astro, Nuxt, etc.
+- ZIP archives containing web content
+- Projects generated by AI tools (Claude, v0, Lovable, Bolt)
+
+</details>
+
+<details>
+<summary><b>Can I update an existing Vibe?</b></summary>
+
+Yes! The skill automatically tracks your publish history. When you publish from the same source path, it updates the existing Vibe instead of creating a new one. Use `--new` flag to force create a new Vibe.
+
+</details>
+
+<details>
+<summary><b>What if my project needs to be built first?</b></summary>
+
+The skill auto-detects buildable projects (Vite, Next.js, Astro, etc.) and prompts you to build before publishing. It supports npm, pnpm, yarn, and bun package managers.
+
+</details>
 
 ## Related Projects
 
-- [MyVibe](https://github.com/ArcBlock/myvibe-skills) - AI-powered web project hosting platform
+- [MyVibe](https://www.myvibe.so) - AI-powered web project hosting platform
+
+## Support
+
+- **Issues**: [GitHub Issues](https://github.com/ArcBlock/myvibe-skills/issues)
+- **MyVibe**: [www.myvibe.so](https://www.myvibe.so)
 
 ## Author
 
@@ -109,4 +181,4 @@ GitHub: [@ArcBlock](https://github.com/ArcBlock)
 
 ## License
 
-MIT
+[Elastic License 2.0](./LICENSE.md)

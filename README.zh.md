@@ -1,69 +1,113 @@
 # MyVibe Skills
 
-[English](./README.md) | 中文
+<p align="center">
+  <img src="https://img.shields.io/badge/version-0.0.12-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Claude_Code-Skill-blueviolet?style=for-the-badge" alt="Claude Code Skill">
+  <a href="https://github.com/ArcBlock/myvibe-skills/blob/main/LICENSE.md">
+    <img src="https://img.shields.io/badge/license-ELv2-green?style=for-the-badge" alt="License">
+  </a>
+  <a href="https://github.com/ArcBlock/myvibe-skills/stargazers">
+    <img src="https://img.shields.io/github/stars/ArcBlock/myvibe-skills?style=for-the-badge" alt="GitHub Stars">
+  </a>
+</p>
 
-用于将 Web 内容发布到 [MyVibe](https://github.com/ArcBlock/myvibe-skills) 的 Claude Code Skills。
+<p align="center">
+  <a href="./README.md">English</a> | 中文
+</p>
+
+一条命令将 Web 项目发布到 [MyVibe](https://www.myvibe.so)。
+自动检测项目类型、按需构建、无缝部署。
+
+## 什么是 MyVibe？
+
+[MyVibe](https://www.myvibe.so) 是一个即时部署 AI 生成 Web 项目的平台。无论你使用 Claude、v0、Lovable、Bolt 还是其他 AI 工具构建项目，MyVibe 都能让你在几秒内将作品发布到永久 URL。
+
+**核心亮点：**
+- 60 秒内完成部署
+- 永久可访问的 URL
+- 支持任何静态 Web 项目
+- 探索和发现社区创作
+
+## 工作原理
+
+```mermaid
+flowchart LR
+    A[检测项目类型] --> B[按需构建]
+    B --> C[发布到 MyVibe]
+
+    A -.- A1[Static/Vite/Next.js/Astro]
+    B -.- B1[npm/pnpm/yarn/bun]
+    C -.- C1[自动提取元数据 & 生成截图]
+```
+
+## 功能特性
+
+| 特性 | 说明 |
+|------|------|
+| **智能检测** | 自动识别 Static、Vite、Next.js、Astro、Nuxt、Monorepo |
+| **构建集成** | 支持 npm、pnpm、yarn、bun |
+| **元数据提取** | 从 HTML/package.json/README 提取标题和描述 |
+| **版本管理** | 自动追踪并更新已发布的 Vibe |
+| **封面图片** | 自动生成截图作为封面 |
 
 ## 前置条件
 
-- 已安装 [Claude Code](https://claude.com/claude-code)
+- 支持 Skill 的 AI 编程助手（如 [Claude Code](https://docs.anthropic.com/en/docs/claude-code)）
 
 ## 安装
 
 ### 快速安装（推荐）
 
 ```bash
-npx add-skill ArcBlock/myvibe-skills
+npx skills add ArcBlock/myvibe-skills
 ```
 
-### 注册为插件市场
+### 通过插件市场（Claude Code）
 
-在 Claude Code 中运行以下命令：
+在 Claude Code 中运行：
 
 ```bash
+# 注册市场
 /plugin marketplace add ArcBlock/myvibe-skills
-```
 
-### 安装 Skills
-
-**方式一：通过浏览界面**
-
-1. 选择 **Browse and install plugins**
-2. 选择 **myvibe-skills**
-3. 选择要安装的插件
-4. 选择 **Install now**
-
-**方式二：直接安装**
-
-```bash
-# 安装指定插件
+# 安装插件
 /plugin install myvibe@myvibe-skills
 ```
 
-**方式三：让 Agent 帮你安装**
+### 让 Agent 帮你安装
 
 直接告诉 Claude Code：
 
 > 请从 github.com/ArcBlock/myvibe-skills 安装 Skills
 
-## 使用方法
+## 快速开始
 
-### Publish 命令
-
-将 Web 内容（HTML 文件、ZIP 压缩包或目录）发布到 MyVibe。
+用自然语言描述你想做的事：
 
 ```bash
-# 使用自然语言描述你想发布的内容
 /myvibe-publish 把这个项目发布到 MyVibe
+```
 
+就这么简单！Skill 会自动处理检测、构建和发布。
+
+<details>
+<summary><b>更多示例</b></summary>
+
+```bash
+# 发布指定目录
 /myvibe-publish 把 ./dist 目录发布到 MyVibe
 
+# 发布单个 HTML 文件
 /myvibe-publish 把 ./index.html 文件发布到 MyVibe
 
+# 发布 ZIP 压缩包
 /myvibe-publish 把 ./dist.zip 文件发布到 MyVibe
 ```
 
-也可以使用命令行选项：
+</details>
+
+<details>
+<summary><b>命令选项</b></summary>
 
 ```bash
 # 发布当前目录（自动检测项目类型）
@@ -79,8 +123,6 @@ npx add-skill ArcBlock/myvibe-skills
 /myvibe-publish --file ./index.html
 ```
 
-**选项：**
-
 | 选项 | 简写 | 说明 |
 |------|------|------|
 | `--file <path>` | `-f` | HTML 文件或 ZIP 压缩包路径 |
@@ -89,17 +131,47 @@ npx add-skill ArcBlock/myvibe-skills
 | `--title <title>` | `-t` | 项目标题 |
 | `--desc <desc>` | | 项目描述 |
 | `--visibility <vis>` | `-v` | 可见性：public 或 private（默认：public）|
+| `--did <did>` | | 用于版本更新的 Vibe DID |
+| `--new` | | 强制创建新 Vibe，忽略历史记录 |
 
-**功能特性：**
+</details>
 
-- 自动检测项目类型（静态站点、已构建、可构建、Monorepo）
-- 智能构建检测，需用户确认后执行
-- 从 HTML、package.json、README 提取元数据
-- 支持多种包管理器（npm、pnpm、yarn、bun）
+## 常见问题
+
+<details>
+<summary><b>可以发布什么类型的项目？</b></summary>
+
+任何静态 Web 项目都可以发布，包括：
+- 单个 HTML 文件
+- 静态站点（HTML/CSS/JS）
+- Vite、Next.js、Astro、Nuxt 等框架的构建产物
+- 包含 Web 内容的 ZIP 压缩包
+- AI 工具生成的项目（Claude、v0、Lovable、Bolt）
+
+</details>
+
+<details>
+<summary><b>可以更新已发布的 Vibe 吗？</b></summary>
+
+可以！Skill 会自动追踪你的发布历史。当你从同一源路径发布时，会更新已有的 Vibe 而不是创建新的。使用 `--new` 参数可以强制创建新 Vibe。
+
+</details>
+
+<details>
+<summary><b>如果项目需要先构建怎么办？</b></summary>
+
+Skill 会自动检测需要构建的项目（Vite、Next.js、Astro 等），并提示你在发布前进行构建。支持 npm、pnpm、yarn 和 bun 包管理器。
+
+</details>
 
 ## 相关项目
 
-- [MyVibe](https://github.com/ArcBlock/myvibe-skills) - AI 驱动的 Web 项目托管平台
+- [MyVibe](https://www.myvibe.so) - AI 驱动的 Web 项目托管平台
+
+## 支持
+
+- **问题反馈**: [GitHub Issues](https://github.com/ArcBlock/myvibe-skills/issues)
+- **MyVibe**: [www.myvibe.so](https://www.myvibe.so)
 
 ## 作者
 
@@ -109,4 +181,4 @@ GitHub: [@ArcBlock](https://github.com/ArcBlock)
 
 ## 许可证
 
-MIT
+[Elastic License 2.0](./LICENSE.md)

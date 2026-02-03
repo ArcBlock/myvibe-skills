@@ -1,8 +1,6 @@
 ---
 name: myvibe-publish
 description: Publish static HTML, ZIP archive, or directory to MyVibe. Use this skill when user wants to publish/deploy web content to MyVibe.
-references:
-  - references/metadata-analysis.md
 ---
 
 # MyVibe Publish
@@ -12,29 +10,12 @@ Publish web content (HTML file, ZIP archive, or directory) to MyVibe.
 ## Usage
 
 ```bash
-# Publish a ZIP file
-/myvibe:myvibe-publish --file ./dist.zip
-
-# Publish a single HTML file
-/myvibe:myvibe-publish --file ./index.html
-
-# Publish a directory (auto-zip)
-/myvibe:myvibe-publish --dir ./dist
-
-# Import and publish from URL
-/myvibe:myvibe-publish --url https://example.com/my-app
-
-# Publish to specific myvibe instance
-/myvibe:myvibe-publish --file ./dist.zip --hub https://custom-hub.com
-
-# Update existing Vibe (auto-detected from previous publish)
-/myvibe:myvibe-publish --dir ./dist
-
-# Force create new Vibe (ignore publish history)
-/myvibe:myvibe-publish --dir ./dist --new
-
-# Explicitly specify Vibe DID to update
-/myvibe:myvibe-publish --dir ./dist --did z2qaXXXXXX
+/myvibe:myvibe-publish --file ./dist.zip      # Publish ZIP
+/myvibe:myvibe-publish --file ./index.html    # Publish HTML
+/myvibe:myvibe-publish --dir ./dist           # Publish directory
+/myvibe:myvibe-publish --url https://example.com/app  # Import from URL
+/myvibe:myvibe-publish --dir ./dist --new     # Force new Vibe
+/myvibe:myvibe-publish --dir ./dist --did z2qaXXX    # Update specific Vibe
 ```
 
 ## Options
@@ -51,341 +32,166 @@ Publish web content (HTML file, ZIP archive, or directory) to MyVibe.
 | `--did <did>` | | Vibe DID for version update (overrides auto-detection) |
 | `--new` | | Force create new Vibe, ignore publish history |
 
-## Workflow
+## Workflow Overview
 
-**CRITICAL: Parallel Execution for Efficiency**
-
-On the FIRST tool call, execute ALL of the following in parallel (single tool call with multiple operations):
-- `Read`: `references/metadata-analysis.md` (workflow reference)
-- `Read`: source file (if `--file`) or main files in directory
-- `Bash`: `git remote get-url origin 2>/dev/null || echo "Not a git repo"` (check GitHub)
-- `Bash`: `node {skill_path}/scripts/utils/fetch-tags.mjs --hub {hub}` (fetch available tags)
-
-This reduces multiple round-trips to a single parallel call.
-
-### Workflow Overview
-
-1. **Detect Project Type** → determine if build is needed
-2. **Build** (if needed) → compile the project
-3. **Metadata Analysis** → extract title, description, tags, screenshot
+1. **Detect Project Type** → if no build needed, start screenshot in background
+2. **Build** (if needed) → then start screenshot in background
+3. **Metadata Analysis** → extract title, description, tags
 4. **Confirm Publish** → show metadata, get user confirmation
-5. **Execute Publish** → upload to MyVibe
+5. **Execute Publish** → script auto-reads screenshot result
+6. **Return Result** → show publish URL
 
-**IMPORTANT**: Step 3 (Metadata Analysis) is ALWAYS required, including after build.
+**First tool call - execute in parallel:**
+- `Read`: source file or main files in directory
+- `Bash`: `git remote get-url origin 2>/dev/null || echo "Not a git repo"`
+- `Bash`: `node {skill_path}/scripts/utils/fetch-tags.mjs --hub {hub}`
 
-### 1. Detect Project Type
+---
 
-Determine what type of project this is and what the publish target will be.
-
-**Target directory**: `--dir` if specified, otherwise current working directory.
-
-#### Project Type Detection
+## Step 1: Detect Project Type
 
 | Check | Project Type | Next Step |
 |-------|-------------|-----------|
-| `--file` with HTML file | **Single HTML** | → Step 3 (analyze the HTML file) |
-| `--file` with ZIP file | **ZIP Archive** | → Step 3 (extract and analyze) |
-| Has `dist/index.html`, `build/index.html`, or `out/index.html` | **Pre-built** | → Step 2 (confirm rebuild or use existing) |
-| Has `package.json` with `build` script, no output folder | **Buildable** | → Step 2 (build first) |
-| Has multiple `package.json` files or workspace config | **Monorepo** | → Step 2 (select app, then build) |
-| Has `index.html` at root, no `package.json` | **Static** | → Step 3 (analyze root directory) |
-| Cannot determine | **Unknown** | → Step 3 (analyze as-is) |
+| `--file` with HTML/ZIP | **Single File** | → Start screenshot, then Step 3 |
+| Has `dist/`, `build/`, or `out/` with index.html | **Pre-built** | → Step 2 (confirm rebuild) |
+| Has `package.json` with build script, no output | **Buildable** | → Step 2 (build first) |
+| Multiple `package.json` or workspace config | **Monorepo** | → Step 2 (select app) |
+| Has `index.html` at root, no `package.json` | **Static** | → Start screenshot, then Step 3 |
 
-Output format:
-```
-Project Type Detection:
-- Type: [type]
-- Reason: [why this type was detected]
-- Publish target: [directory or file path]
-- Next step: [Step 2: Build / Step 3: Metadata Analysis]
-```
-
-### 2. Build Decision (for Pre-built/Buildable/Monorepo projects)
-
-#### Detect Build Configuration
-
-**Package Manager** (from lock files):
-
-| Lock File | Package Manager |
-|-----------|-----------------|
-| `pnpm-lock.yaml` | pnpm |
-| `yarn.lock` | yarn |
-| `bun.lockb` or `bun.lock` | bun |
-| `package-lock.json` | npm |
-| None | npm (default) |
-
-**Build Command** (from `package.json` scripts):
-- Priority: `build:prod` > `build:production` > `build`
-
-**Output Directory** (from config files):
-
-| Config File | Expected Output |
-|-------------|-----------------|
-| `vite.config.*` | `dist` |
-| `next.config.*` | `.next` or `out` |
-| `webpack.config.*` | `dist` |
-| `astro.config.*` | `dist` |
-| `nuxt.config.*` | `.output` |
-| None recognized | Check `dist`, `build`, `out` in order |
-
-#### Show Analysis & Confirm Build
-
-Present the analysis to user:
-
-```
-Project Analysis:
-- Type: [framework] project
-- Package Manager: [pm]
-- Build Command: [pm] run build
-- Output Directory: [dir]
-
-Warnings (if any):
-- Missing .env file (.env.example exists)
-- Large files detected (> 10MB)
-```
-
-**For Pre-built projects** (existing build output found), use `AskUserQuestion`:
-
-```
-Question: "Found existing build output in [dir]/. Rebuild to ensure latest?"
-Header: "Build"
-Options:
-  - Label: "Rebuild & Publish"
-    Description: "Run build again, then publish [dir]/"
-  - Label: "Use Existing"
-    Description: "Publish existing [dir]/ without rebuilding"
-  - Label: "Publish Source"
-    Description: "Skip output folder, publish source as-is"
-```
-
-**For Buildable projects** (no build output), use `AskUserQuestion`:
-
-```
-Question: "Proceed with build before publishing?"
-Header: "Build"
-Options:
-  - Label: "Build & Publish"
-    Description: "Run build, then publish [output_dir]/"
-  - Label: "Publish Source"
-    Description: "Skip build, publish source as-is"
-```
-
-#### Execute Build (if confirmed)
-
+**Start screenshot for non-build projects** (run_in_background: true):
 ```bash
-cd [project_dir] && [pm] install && [pm] run build
+node {skill_path}/scripts/utils/generate-screenshot.mjs --dir {publish_target} --hub {hub}
 ```
 
-**On build failure:**
-- Analyze error output
-- Offer to help fix common issues (missing dependencies, config errors)
-- User can choose to fix and retry, or publish source as-is
+---
 
-**After build completes:** Proceed to **Step 3: Metadata Analysis** with the build output directory as the publish target.
+## Step 2: Build (if needed)
 
-#### Monorepo Handling
+Detect package manager from lock files, build command from package.json scripts.
 
-When multiple `package.json` files detected, use `AskUserQuestion`:
+Use `AskUserQuestion` to confirm:
+- **Pre-built**: "Rebuild or use existing output?"
+- **Buildable**: "Build before publishing?"
+- **Monorepo**: "Which app to publish?"
 
-```
-Question: "Monorepo detected. Which app would you like to publish?"
-Header: "App"
-Options:
-  - Label: "[apps/web]"
-    Description: "[framework] detected in apps/web"
-  - Label: "[apps/admin]"
-    Description: "[framework] detected in apps/admin"
-  - Label: "Other"
-    Description: "Specify a different path"
-```
+After build completes, start screenshot in background, then proceed to Step 3.
 
-After selecting and building the app, proceed to **Step 3: Metadata Analysis**.
+---
 
-### 3. Metadata Analysis
+## Step 3: Metadata Analysis
 
-**CRITICAL: This step is MANDATORY for ALL project types, including after build.**
+### Extract title
+Priority: `<title>` → `og:title` → package.json name → first `<h1>`
 
-Follow `references/metadata-analysis.md` completely. Each step MUST output results:
+### Generate description (50-150 words, story-style)
 
-1. Extract metadata (title, description, githubRepo)
-2. Fetch and match tags
-3. Generate screenshot
+Cover: **Why** (motivation) → **What** (functionality) → **Journey** (optional)
 
-If screenshot fails, skip coverImage and let server auto-generate.
+Sources: conversation history, README.md, source code, package.json, git log
 
-### 4. Confirm Publish
+Guidelines:
+- Natural, conversational tone
+- Focus on value and story, not technical specs
+- Avoid generic "A web app built with React"
 
-Present all extracted metadata to the user:
+### Extract githubRepo
+From git remote or package.json repository field. Convert SSH to HTTPS format.
+
+### Match tags
+
+Fetch tags: `node {skill_path}/scripts/utils/fetch-tags.mjs --hub {hub}`
+
+| Tag Type | Match Method |
+|----------|--------------|
+| **techStackTags** | Match package.json dependencies against tag slug |
+| **platformTags** | From conversation context (Claude Code, Cursor, etc.) |
+| **modelTags** | From conversation context (Claude 3.5 Sonnet, GPT-4, etc.) |
+| **categoryTags** | Infer from project (game libs → game, charts → viz) |
+
+---
+
+## Step 4: Confirm Publish
+
+Display metadata and use `AskUserQuestion`:
 
 ```
 Publishing to MyVibe:
 ──────────────────────
-Title: [extracted title]
+Title: [value]
 
 Description:
-[generated story, 50-150 words]
+[50-150 word story]
 
-Visibility: public
-Source: [directory path]
+GitHub: [URL or "Not detected"]
+Cover Image: [Will be included if ready]
 
-GitHub: [repo URL or "Not detected"]
-Cover Image: [screenshot URL or "Will be auto-generated"]
-
-Tags (auto-detected):
-- Tech Stack: [matched tag names, e.g., "React, TypeScript, Vite"]
-- Platform: [matched tag names or "None"]
-- Category: [suggested category or "None"]
-- Model: [detected AI models or "None"]
+Tags: Tech Stack: [...] | Platform: [...] | Category: [...] | Model: [...]
 ```
 
-Use `AskUserQuestion` to confirm:
+Options: "Publish" / "Edit details"
 
-```
-Question: "Confirm publish with these details?"
-Header: "Publish"
-Options:
-  - Label: "Publish"
-    Description: "Publish with the metadata shown above"
-  - Label: "Edit details"
-    Description: "Modify title, description, tags, or other fields"
-```
+---
 
-If user selects "Edit details", collect corrections via follow-up questions.
+## Step 5: Execute Publish
 
-### 5. Execute Publish
+**Check dependencies**: If `scripts/node_modules` missing, run `npm install` first.
+**No need to check screenshot background task result** - the publish script automatically waits for and reads the screenshot result. Execute publish directly:
 
-Only after user confirmation in Step 4, execute the publish script.
-
-**Dependency Check Strategy:**
-1. Check if `skills/myvibe-publish/scripts/node_modules` directory exists
-2. If not exists: run `npm install` first
-3. If publish fails with module errors: run `npm install` and retry
-
-**Method 1: Using stdin (Recommended - no file writing needed)**
-
-Pass JSON config via stdin using heredoc:
+Pass config via stdin:
 
 ```bash
-node skills/myvibe-publish/scripts/publish.mjs --config-stdin <<'EOF'
+node {skill_path}/scripts/publish.mjs --config-stdin <<'EOF'
 {
-  "source": {
-    "type": "dir",
-    "path": "./dist",
-    "did": "z2qaXXXX"
-  },
+  "source": { "type": "dir", "path": "./dist", "did": "z2qaXXXX" },
   "hub": "https://www.myvibe.so",
   "metadata": {
     "title": "My App",
-    "description": "A cool web application",
+    "description": "Story description here",
     "visibility": "public",
-    "coverImage": "https://...",
     "githubRepo": "https://github.com/user/repo",
     "platformTags": [1, 2],
-    "techStackTags": [3, 4, 5],
-    "categoryTags": [6],
-    "modelTags": [7]
+    "techStackTags": [3, 4],
+    "categoryTags": [5],
+    "modelTags": [6]
   }
 }
 EOF
 ```
 
-Note: `did` in source is optional - only needed for explicit version updates.
+- `did` optional - for explicit version updates
+- `coverImage` auto-read from `/tmp/myvibe-screenshot-{hash}.json`
+- Screenshot result file cleaned up after publish
 
-**Method 2: Command Line Arguments (Simple cases)**
+---
 
-```bash
-# Publish a directory
-node skills/myvibe-publish/scripts/publish.mjs \
-  --dir ./dist \
-  --hub https://www.myvibe.so \
-  --title "My App" \
-  --desc "A cool app" \
-  --visibility public
+## Step 6: Return Result
 
-# Publish a file
-node skills/myvibe-publish/scripts/publish.mjs \
-  --file ./dist.zip \
-  --hub https://www.myvibe.so \
-  --title "My App"
-
-# Import from URL
-node skills/myvibe-publish/scripts/publish.mjs \
-  --url https://example.com/my-app \
-  --hub https://www.myvibe.so
-```
-
-**Script Output:**
-
-On success:
 ```
 Published successfully!
-URL: https://www.myvibe.so/{userDid}/{vibeDid}
-```
+🔗 [URL]
 
-For non-paid users updating existing projects (version history not enabled):
-```
+[If upgrade prompt shown:]
 📦 Previous version overwritten. Want to keep version history?
    Upgrade to Pro → {hub}/pricing
 ```
 
-The pricing URL is dynamically constructed based on the hub parameter.
-
-### 6. Return Result
-
-**On success**, display in this format:
-
-```
-Published successfully!
-
-🔗 [published URL]
-
-[If upgrade prompt appeared in script output, display it exactly as shown:]
-📦 Previous version overwritten. Want to keep version history?
-   Upgrade to Pro → {hub}/pricing
-```
-
-**On failure**: Show the error message and suggest solutions based on the Error Handling table.
+---
 
 ## Error Handling
 
-| Error | Handling |
-|-------|----------|
-| Dependencies not installed | Run `npm install` in scripts directory |
-| 401/403 Authorization error | Token will be cleared automatically, re-run to authorize again |
-| Upload failed | Show error message, suggest checking file format |
-| Conversion failed | Show conversion error from API |
-| Network error | Suggest retry |
-| Build failed | Analyze error, offer to help fix, or publish source as-is |
-| Missing dependencies | Run `[pm] install` first |
-| Config error | Check framework config files |
+| Error | Action |
+|-------|--------|
+| Dependencies missing | Run `npm install` in scripts directory |
+| 401/403 Auth error | Token auto-cleared, re-run to authorize |
+| Build failed | Analyze error, offer fix, or publish source as-is |
 | Screenshot failed | Skip coverImage, proceed without it |
-| agent-browser not installed | Run `npm install -g agent-browser && agent-browser install` |
-| agent-browser Chromium missing | Run `agent-browser install` (or `--with-deps` on Linux) |
-| Tags fetch failed | Use expired cache if available, or skip tag matching |
-| Image upload failed | Skip coverImage, proceed without it |
-
-## Authorization
-
-The script handles authorization automatically:
-- First run opens browser for user to authorize
-- Token is saved for future use
-- On 401/403 errors, token is cleared and user needs to re-authorize on next run
+| agent-browser missing | Run `npm install -g agent-browser && agent-browser install` |
 
 ## Notes
 
-- Always analyze content before publishing to generate meaningful title/description
-- Never use directory names as title - they are often meaningless
-- Confirm with user before executing publish
-- Default hub is https://www.myvibe.so/
-- Local build detection is preprocessing only; server has its own build pipeline
-- Be conservative: if project type is uncertain, publish as-is and let server handle
-- `--dir` specifies target directory and requires full metadata analysis
-- `--file` specifies single file and also requires metadata analysis and screenshot generation
-- Build detection should not block publishing
-- Tags are cached locally for 7 days to avoid repeated API calls
-- All auto-detected metadata should be shown as "suggestions" - user can modify
-- If screenshot fails, skip coverImage and let server auto-generate
-- Use config file method when publishing with extended metadata (tags, coverImage, etc.)
-- Publish history is stored in `~/.myvibe/published.yaml` for automatic version updates
-- When re-publishing the same source path, the existing Vibe DID is automatically used
-- Use `--new` to force create a new Vibe instead of updating existing one
+- Always analyze content for meaningful title/description - never use directory names
+- Confirm with user before publishing
+- Default hub: https://www.myvibe.so/
+- Tags cached 7 days locally
+- Publish history in `~/.myvibe/published.yaml` for auto version updates
+- Use `--new` to force new Vibe instead of updating

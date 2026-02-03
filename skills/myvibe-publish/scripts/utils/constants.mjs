@@ -1,5 +1,8 @@
 // MyVibe publish constants
 
+import { createHash } from "node:crypto";
+import { resolve } from "node:path";
+
 // Default MyVibe URL
 export const VIBE_HUB_URL_DEFAULT = "https://www.myvibe.so";
 
@@ -40,3 +43,17 @@ export const SUPPORTED_HTML_TYPES = ["text/html"];
 // File extensions
 export const ARCHIVE_EXTENSIONS = [".zip"];
 export const HTML_EXTENSIONS = [".html", ".htm"];
+
+// Screenshot result file path (shared between generate-screenshot.mjs and publish.mjs)
+// Uses hash of source path to avoid conflicts in concurrent publishes
+
+/**
+ * Get screenshot result file path based on source path
+ * @param {string} sourcePath - The source path (dir or file) being published
+ * @returns {string} - Path to screenshot result file: /tmp/myvibe-screenshot-{hash}.json
+ */
+export function getScreenshotResultPath(sourcePath) {
+  const absolutePath = resolve(sourcePath);
+  const hash = createHash("md5").update(absolutePath).digest("hex").slice(0, 8);
+  return `/tmp/myvibe-screenshot-${hash}.json`;
+}

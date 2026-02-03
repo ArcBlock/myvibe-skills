@@ -1,16 +1,46 @@
 #!/usr/bin/env node
 
-import { existsSync, unlinkSync, mkdirSync, copyFileSync, rmSync } from "node:fs";
+import { existsSync, unlinkSync, mkdirSync, copyFileSync, rmSync, writeFileSync } from "node:fs";
 import { spawn, execSync } from "node:child_process";
 import path from "node:path";
 import chalk from "chalk";
 
-import { VIBE_HUB_URL_DEFAULT } from "./constants.mjs";
+import { VIBE_HUB_URL_DEFAULT, getScreenshotResultPath } from "./constants.mjs";
 import { uploadImage } from "./upload-image.mjs";
 
 const DEFAULT_PORT = 3456;
 const SERVER_STARTUP_TIMEOUT = 10000;
 const SCREENSHOT_PATH = "/tmp/myvibe-screenshot.png";
+
+/**
+ * Save screenshot result to file for publish.mjs to read
+ * @param {string} sourcePath - The source path (dir or file) for hash calculation
+ * @param {Object} result - The result object to save
+ */
+function saveResultToFile(sourcePath, result) {
+  try {
+    const resultPath = getScreenshotResultPath(sourcePath);
+    writeFileSync(resultPath, JSON.stringify(result, null, 2));
+    console.log(chalk.gray(`Result saved to ${resultPath}`));
+  } catch (error) {
+    console.error(chalk.yellow(`Warning: Failed to save result to file: ${error.message}`));
+  }
+}
+
+/**
+ * Clear previous screenshot result file
+ * @param {string} sourcePath - The source path (dir or file) for hash calculation
+ */
+function clearResultFile(sourcePath) {
+  try {
+    const resultPath = getScreenshotResultPath(sourcePath);
+    if (existsSync(resultPath)) {
+      unlinkSync(resultPath);
+    }
+  } catch {
+    // Ignore errors
+  }
+}
 
 /**
  * Generate screenshot of a local directory or file and upload to MyVibe
@@ -27,20 +57,29 @@ export async function generateScreenshot(options) {
     port = DEFAULT_PORT,
   } = options;
 
+  // Determine source path for hash calculation (original path, not temp dir)
+  // Fallback to "unknown" for edge case when neither is provided (will fail validation)
+  const sourcePath = options.file || options.dir || "unknown";
+
   let serverProcess = null;
   let tempDir = null;
   let dir = options.dir;
+
+  // Clear previous result file at the start
+  clearResultFile(sourcePath);
 
   try {
     // Handle --file: copy to temp directory
     if (options.file) {
       const filePath = path.resolve(options.file);
       if (!existsSync(filePath)) {
-        return {
+        const result = {
           success: false,
           error: `File not found: ${filePath}`,
           suggestion: "Check that the file path is correct",
         };
+        saveResultToFile(sourcePath, result);
+        return result;
       }
 
       // Create temp directory and copy file as index.html
@@ -52,21 +91,25 @@ export async function generateScreenshot(options) {
 
     // Validate that we have a directory to serve
     if (!dir) {
-      return {
+      const result = {
         success: false,
         error: "--dir or --file is required",
         suggestion: "Provide either --dir <directory> or --file <html-file>",
       };
+      saveResultToFile(sourcePath, result);
+      return result;
     }
 
     // Step 1: Validate directory
     const dirPath = path.resolve(dir);
     if (!existsSync(dirPath)) {
-      return {
+      const result = {
         success: false,
         error: `Directory not found: ${dirPath}`,
         suggestion: "Check that the directory path is correct",
       };
+      saveResultToFile(sourcePath, result);
+      return result;
     }
 
     console.log(chalk.cyan(`\n📸 Generating screenshot for: ${dirPath}\n`));
@@ -75,6 +118,7 @@ export async function generateScreenshot(options) {
     console.log(chalk.gray(`Checking agent-browser...`));
     const agentBrowserCheck = checkAgentBrowser();
     if (!agentBrowserCheck.installed) {
+      saveResultToFile(sourcePath, agentBrowserCheck);
       return agentBrowserCheck;
     }
     console.log(chalk.green(`✓ agent-browser ready`));
@@ -102,23 +146,34 @@ export async function generateScreenshot(options) {
     const uploadResult = await uploadImage({ file: SCREENSHOT_PATH, hub });
 
     if (!uploadResult.success) {
-      return {
+      const result = {
         success: false,
         error: uploadResult.error,
         suggestion: "Check your network connection and MyVibe authorization",
       };
+      // Save error result to file for publish.mjs to read
+      saveResultToFile(sourcePath, result);
+      return result;
     }
 
     console.log(chalk.green.bold(`\n✅ Screenshot uploaded successfully!\n`));
     console.log(chalk.cyan(`🔗 ${uploadResult.url}\n`));
 
-    return {
+    const result = {
       success: true,
       url: uploadResult.url,
       screenshotPath: SCREENSHOT_PATH,
     };
+
+    // Save result to file for publish.mjs to read
+    saveResultToFile(sourcePath, result);
+
+    return result;
   } catch (error) {
-    return handleError(error);
+    const result = handleError(error);
+    // Save error result to file for publish.mjs to read
+    saveResultToFile(sourcePath, result);
+    return result;
   } finally {
     // Cleanup: stop server
     if (serverProcess) {

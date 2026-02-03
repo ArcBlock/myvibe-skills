@@ -8,12 +8,53 @@ import chalk from "chalk";
 import { joinURL } from "ufo";
 import yaml from "js-yaml";
 
-import { VIBE_HUB_URL_DEFAULT, API_PATHS } from "./utils/constants.mjs";
+import { VIBE_HUB_URL_DEFAULT, API_PATHS, getScreenshotResultPath } from "./utils/constants.mjs";
 import { getAccessToken } from "./utils/auth.mjs";
 import { apiPatch, apiGet, subscribeToSSE, pollConversionStatus } from "./utils/http.mjs";
 import { zipDirectory, getFileInfo } from "./utils/zip.mjs";
 import { uploadFile, createVibeFromUrl } from "./utils/upload.mjs";
 import { getPublishHistory, savePublishHistory } from "./utils/history.mjs";
+
+/**
+ * Try to read screenshot result from file with retries
+ * @param {string} sourcePath - The source path (dir or file) for hash calculation
+ * @param {number} maxRetries - Maximum number of retries (default: 3)
+ * @param {number} retryDelay - Delay between retries in ms (default: 3000)
+ * @returns {Promise<{success: boolean, url?: string, resultPath?: string}>}
+ */
+async function readScreenshotResult(sourcePath, maxRetries = 3, retryDelay = 3000) {
+  const resultPath = getScreenshotResultPath(sourcePath);
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      if (existsSync(resultPath)) {
+        const content = readFileSync(resultPath, "utf-8");
+        const result = JSON.parse(content);
+
+        if (result.success && result.url) {
+          console.log(chalk.green(`✓ Screenshot ready: ${result.url}`));
+          return { ...result, resultPath };
+        } else {
+          // Screenshot failed, don't retry
+          console.log(chalk.yellow(`Screenshot generation failed: ${result.error || "Unknown error"}`));
+          return { success: false, resultPath };
+        }
+      }
+    } catch (error) {
+      // JSON parse error or other issues
+      console.log(chalk.yellow(`Failed to read screenshot result: ${error.message}`));
+    }
+
+    // File not found, wait and retry (except on last attempt)
+    if (attempt < maxRetries) {
+      console.log(chalk.gray(`Screenshot not ready, waiting ${retryDelay / 1000}s... (attempt ${attempt}/${maxRetries})`));
+      await new Promise((resolve) => setTimeout(resolve, retryDelay));
+    }
+  }
+
+  console.log(chalk.yellow("Screenshot not available, proceeding without cover image"));
+  return { success: false, resultPath };
+}
 
 /**
  * Main publish function
@@ -177,6 +218,19 @@ async function publish(options) {
       }
     }
 
+    // Try to read screenshot result from file (if not already provided)
+    // Only for dir/file mode, not URL import
+    let finalCoverImage = coverImage;
+    let screenshotResultPath = null;
+    if (!finalCoverImage && sourcePath && !url) {
+      console.log(chalk.cyan("\nChecking for screenshot..."));
+      const screenshotResult = await readScreenshotResult(sourcePath);
+      screenshotResultPath = screenshotResult.resultPath;
+      if (screenshotResult.success && screenshotResult.url) {
+        finalCoverImage = screenshotResult.url;
+      }
+    }
+
     // Execute publish action
     console.log(chalk.cyan("\nPublishing..."));
 
@@ -191,7 +245,7 @@ async function publish(options) {
     if (desc) actionData.description = desc;
     if (visibility) actionData.visibility = visibility;
     // Extended metadata fields
-    if (coverImage) actionData.coverImage = coverImage;
+    if (finalCoverImage) actionData.coverImage = finalCoverImage;
     if (githubRepo) actionData.githubRepo = githubRepo;
     if (platformTags && platformTags.length > 0) actionData.platformTags = platformTags;
     if (techStackTags && techStackTags.length > 0) actionData.techStackTags = techStackTags;
@@ -232,6 +286,16 @@ async function publish(options) {
         try {
           unlinkSync(configPath);
           console.log(chalk.gray(`Cleaned up config file: ${configPath}`));
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+      }
+
+      // Delete screenshot result file after successful publish
+      if (screenshotResultPath && existsSync(screenshotResultPath)) {
+        try {
+          unlinkSync(screenshotResultPath);
+          console.log(chalk.gray(`Cleaned up screenshot result: ${screenshotResultPath}`));
         } catch (e) {
           // Ignore cleanup errors
         }
