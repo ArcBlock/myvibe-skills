@@ -1,6 +1,6 @@
 ---
 name: myvibe-publish
-description: Publish static HTML, ZIP archive, or directory to MyVibe. Use this skill when user wants to publish/deploy web content to MyVibe.
+description: Publish static HTML, ZIP archive, or directory to MyVibe. Use this skill when user wants to publish web content to MyVibe.
 ---
 
 # MyVibe Publish
