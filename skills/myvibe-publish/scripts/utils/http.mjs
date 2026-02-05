@@ -20,21 +20,27 @@ export async function apiRequest(url, options, accessToken, hubUrl) {
   });
 
   if (!response.ok) {
-    // Handle auth errors specially
-    if (response.status === 401 || response.status === 403) {
-      await handleAuthError(hubUrl, response.status);
-    }
-
     let errorMessage;
+    let errorCode;
     try {
       const errorData = await response.json();
       errorMessage = errorData.error || errorData.message || response.statusText;
+      errorCode = errorData.code;
     } catch {
       errorMessage = response.statusText;
     }
 
+    // Handle auth errors specially, but not subscription-related 403s
+    if (response.status === 401 || response.status === 403) {
+      // Don't clear auth for subscription-related errors
+      if (errorCode !== "PRIVATE_MODE_REQUIRES_SUBSCRIPTION") {
+        await handleAuthError(hubUrl, response.status);
+      }
+    }
+
     const error = new Error(errorMessage);
     error.status = response.status;
+    error.code = errorCode;
     throw error;
   }
 

@@ -268,7 +268,7 @@ async function publish(options) {
       if (existingDid && versionHistoryEnabled === false) {
         const pricingUrl = joinURL(hub, "pricing");
         console.log(chalk.yellow("📦 Previous version overwritten. Want to keep version history?"));
-        console.log(chalk.yellow(`   Upgrade to Pro → ${pricingUrl}\n`));
+        console.log(chalk.yellow(`   Upgrade to Creator → ${pricingUrl}\n`));
       }
 
       // Save publish history for future version updates

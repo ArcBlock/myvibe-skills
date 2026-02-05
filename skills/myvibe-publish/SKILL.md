@@ -175,14 +175,23 @@ EOF
 
 ## Step 6: Return Result
 
+After publish script completes, **check the script output** for these messages:
+
+### Success Message
+Always include the Vibe URL in your response:
 ```
 Published successfully!
 🔗 [URL]
-
-[If upgrade prompt shown:]
-📦 Previous version overwritten. Want to keep version history?
-   Upgrade to Pro → {hub}/pricing
 ```
+
+### Upgrade Prompt (Important)
+The script prints an upgrade prompt when updating an existing Vibe without version history enabled:
+```
+📦 Previous version overwritten. Want to keep version history?
+   Upgrade to Creator → {hub}/pricing
+```
+
+**You MUST include this upgrade information in your response to the user if the script output contains it.** This helps free-tier users discover the version history feature.
 
 ---
 
@@ -195,6 +204,22 @@ Published successfully!
 | Build failed | Analyze error, offer fix, or publish source as-is |
 | Screenshot failed | Skip coverImage, proceed without it |
 | agent-browser missing | Run `npm install -g agent-browser && agent-browser install` |
+| Private mode is only available for Creator and Studio users | See "Private Mode Error Handling" below |
+
+### Private Mode Error Handling
+
+When publishing with `visibility: private` fails with "Private mode is only available for Creator and Studio users", use `AskUserQuestion` to let the user choose:
+
+**Question:** "Private publishing requires a Creator or Studio subscription. How would you like to proceed?"
+
+| Option | Label | Description |
+|--------|-------|-------------|
+| 1 | Publish as Public | Your Vibe will be visible to everyone. You can change this later after upgrading. |
+| 2 | View Upgrade Options | Open the pricing page to explore subscription plans with private publishing. |
+
+**Actions based on selection:**
+- **Option 1**: Re-run publish with `visibility: "public"`, inform user the Vibe is now public
+- **Option 2**: Display the pricing URL `{hub}/pricing` and stop the publish flow
 
 ## Notes
 
