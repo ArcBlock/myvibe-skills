@@ -170,4 +170,7 @@ GitHub: [@ArcBlock](https://github.com/ArcBlock)
 
 ## License
 
-[Elastic License 2.0](./LICENSE.md)
+This project is dual-licensed:
+
+- **[Elastic License 2.0](./LICENSE.md)** — Primary license for this repository
+- **[Apache License 2.0](./LICENSE-APACHE-2.0.txt)** — For distribution via the [OpenAI Codex Skills Catalog](https://github.com/openai/skills)
