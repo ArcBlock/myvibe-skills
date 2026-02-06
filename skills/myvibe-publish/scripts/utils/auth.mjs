@@ -163,6 +163,9 @@ export async function handleAuthError(hubUrl, statusCode) {
 
 
 function getAgentName() {
+  if (process.env.CODEX) {
+    return 'Codex';
+  }
   if (process.env.CLAUDECODE) {
     return 'Claude Code';
   }
