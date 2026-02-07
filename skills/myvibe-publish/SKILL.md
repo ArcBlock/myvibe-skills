@@ -72,6 +72,14 @@ node {skill_path}/scripts/utils/generate-screenshot.mjs --file {publish_target} 
 
 IMPORTANT: Use `--file` when the source is a single HTML file, and `--dir` when it is a directory. The flag must match the `source.type` in the publish config so that both scripts calculate the same hash for the screenshot result file.
 
+**After starting the screenshot background task**, use `TaskOutput` (with `block: false`) to check the task output before proceeding. If the output contains "agent-browser is not installed" or "Chromium is not installed":
+
+1. Install agent-browser: `npm install -g agent-browser && agent-browser install`
+2. Re-run the screenshot command (same command as above, run_in_background: true)
+3. Check again with `TaskOutput` (block: false) to confirm it's running
+
+This ensures the screenshot can complete successfully in the background while you continue with metadata analysis.
+
 ---
 
 ## Step 2: Build (if needed)
@@ -83,7 +91,7 @@ Use `AskUserQuestion` to confirm:
 - **Buildable**: "Build before publishing?"
 - **Monorepo**: "Which app to publish?"
 
-After build completes, start screenshot in background, then proceed to Step 3.
+After build completes, start screenshot in background (same check as Step 1: use `TaskOutput` block: false to verify agent-browser is available, install if needed, then retry), then proceed to Step 3.
 
 ---
 
@@ -144,7 +152,7 @@ Options: "Publish" / "Edit details"
 ## Step 5: Execute Publish
 
 **Check dependencies**: If `scripts/node_modules` missing, run `npm install` first.
-**No need to check screenshot background task result** - the publish script automatically waits for and reads the screenshot result. Execute publish directly:
+The publish script automatically reads the screenshot result file. Execute publish directly:
 
 Pass config via stdin:
 
@@ -226,6 +234,6 @@ When publishing with `visibility: private` fails with "Private mode is only avai
 - Always analyze content for meaningful title/description - never use directory names
 - Confirm with user before publishing
 - Default hub: https://www.myvibe.so/
-- Tags cached 7 days locally
+- Tags fetched fresh from API on each publish
 - Publish history in `~/.myvibe/published.yaml` for auto version updates
 - Use `--new` to force new Vibe instead of updating

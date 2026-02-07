@@ -118,6 +118,9 @@ export async function generateScreenshot(options) {
     console.log(chalk.gray(`Checking agent-browser...`));
     const agentBrowserCheck = checkAgentBrowser();
     if (!agentBrowserCheck.installed) {
+      console.error(chalk.red(`\nERROR: ${agentBrowserCheck.error}`));
+      console.error(chalk.yellow(`SUGGESTION: ${agentBrowserCheck.suggestion}`));
+      console.error(chalk.red(`Screenshot generation aborted. Please install agent-browser and retry.\n`));
       saveResultToFile(sourcePath, agentBrowserCheck);
       return agentBrowserCheck;
     }

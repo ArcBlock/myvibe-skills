@@ -1,6 +1,6 @@
 {
   "name": "myvibe-publish-scripts",
-  "version": "0.0.19",
+  "version": "0.0.20",
   "type": "module",
   "description": "Scripts for publishing to MyVibe",
   "main": "publish.mjs",
