@@ -256,12 +256,12 @@ async function publish(options) {
     if (actionResult.success) {
       console.log(chalk.green.bold("\n✅ Published successfully!\n"));
 
-      // Fetch vibe details to get userDid and preview URL
-      const vibeInfoUrl = joinURL(origin, API_PATHS.VIBE_INFO(did));
-      const vibeInfo = await apiGet(vibeInfoUrl, accessToken, hub);
-
-      // Build vibe URL: /{userDid}/{did}
-      const vibeUrl = joinURL(hub, vibeInfo.userDid, did);
+      let vibeUrl = actionResult.contentUrl;
+      if (!vibeUrl) {
+        const vibeInfoUrl = joinURL(origin, API_PATHS.VIBE_INFO(did));
+        const vibeInfo = await apiGet(vibeInfoUrl, accessToken, hub);
+        vibeUrl = joinURL(hub, vibeInfo.userDid, did);
+      }
       console.log(chalk.cyan(`🔗 ${vibeUrl}\n`));
 
       // Upgrade prompt: updating existing project + version history not enabled
