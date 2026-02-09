@@ -9,7 +9,7 @@
   <img src="https://img.shields.io/badge/Agent_Skill-blueviolet?style=for-the-badge" alt="Agent Skill">
   <img src="https://img.shields.io/badge/MCP-Compatible-blue?style=for-the-badge" alt="MCP Compatible">
   <a href="https://github.com/ArcBlock/myvibe-skills/blob/main/LICENSE.md">
-    <img src="https://img.shields.io/badge/license-ELv2-green?style=for-the-badge" alt="License">
+    <img src="https://img.shields.io/badge/license-Apache%202.0-green?style=for-the-badge" alt="License">
   </a>
   <a href="https://github.com/ArcBlock/myvibe-skills/stargazers">
     <img src="https://img.shields.io/github/stars/ArcBlock/myvibe-skills?style=for-the-badge" alt="GitHub Stars">
@@ -170,4 +170,4 @@ GitHub: [@ArcBlock](https://github.com/ArcBlock)
 
 ## 许可证
 
-[Elastic License 2.0](./LICENSE.md)
+[Apache License 2.0](./LICENSE.md)
