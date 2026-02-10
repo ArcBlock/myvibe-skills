@@ -7,6 +7,12 @@ description: Publish static HTML, ZIP archive, or directory to MyVibe. Use this 
 
 Publish web content (HTML file, ZIP archive, or directory) to MyVibe.
 
+## Prerequisites
+
+- Node.js 18 or later
+- All script executions in this skill require network access. Always run Bash commands with `sandbox_permissions=require_escalated` to ensure network permissions are enabled.
+- The deployment and screenshot generation may take a few minutes. Use a 10-minute (600000ms) timeout for publish commands.
+
 ## Usage
 
 ```bash
@@ -212,6 +218,7 @@ The script prints an upgrade prompt when updating an existing Vibe without versi
 | Build failed | Analyze error, offer fix, or publish source as-is |
 | Screenshot failed | Skip coverImage, proceed without it |
 | agent-browser missing | Run `npm install -g agent-browser && agent-browser install` |
+| Script execution failed (network/sandbox) | Check if network permissions are enabled. Add `sandbox_permissions=require_escalated` and retry |
 | Private mode is only available for Creator and Studio users | See "Private Mode Error Handling" below |
 
 ### Private Mode Error Handling
