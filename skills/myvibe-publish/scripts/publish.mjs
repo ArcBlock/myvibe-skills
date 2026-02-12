@@ -9,6 +9,7 @@ import yaml from "js-yaml";
 
 import { VIBE_HUB_URL_DEFAULT, API_PATHS, getScreenshotResultPath, isMainModule } from "./utils/constants.mjs";
 import { getAccessToken } from "./utils/auth.mjs";
+import { getApiBaseUrl } from "./utils/blocklet-info.mjs";
 import { apiPatch, apiGet, subscribeToSSE, pollConversionStatus } from "./utils/http.mjs";
 import { zipDirectory, getFileInfo } from "./utils/zip.mjs";
 import { uploadFile, createVibeFromUrl } from "./utils/upload.mjs";
@@ -189,9 +190,9 @@ async function publish(options) {
     if (needsConversion) {
       console.log(chalk.cyan("\nWaiting for conversion..."));
 
-      const { origin } = new URL(hub);
-      const streamUrl = joinURL(origin, API_PATHS.CONVERT_STREAM(did));
-      const statusUrl = joinURL(origin, API_PATHS.CONVERSION_STATUS(did));
+      const apiBaseUrl = await getApiBaseUrl(hub);
+      const streamUrl = joinURL(apiBaseUrl, API_PATHS.CONVERT_STREAM(did));
+      const statusUrl = joinURL(apiBaseUrl, API_PATHS.CONVERSION_STATUS(did));
 
       try {
         // Try SSE stream first
@@ -244,8 +245,8 @@ async function publish(options) {
     // Execute publish action
     console.log(chalk.cyan("\nPublishing..."));
 
-    const { origin } = new URL(hub);
-    const actionUrl = joinURL(origin, API_PATHS.VIBE_ACTION(did));
+    const apiBaseUrl = await getApiBaseUrl(hub);
+    const actionUrl = joinURL(apiBaseUrl, API_PATHS.VIBE_ACTION(did));
 
     const actionData = {
       action: "publish",
@@ -282,7 +283,7 @@ async function publish(options) {
 
       let vibeUrl = actionResult.contentUrl;
       if (!vibeUrl) {
-        const vibeInfoUrl = joinURL(origin, API_PATHS.VIBE_INFO(did));
+        const vibeInfoUrl = joinURL(apiBaseUrl, API_PATHS.VIBE_INFO(did));
         const vibeInfo = await apiGet(vibeInfoUrl, accessToken, hub);
         vibeUrl = joinURL(hub, vibeInfo.userDid, did);
       }

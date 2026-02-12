@@ -4,6 +4,8 @@ import { homedir } from "node:os";
 import { join, dirname } from "node:path";
 import yaml from "js-yaml";
 
+import { getApiBaseUrl } from "./blocklet-info.mjs";
+
 const HISTORY_DIR = join(homedir(), ".myvibe");
 const HISTORY_FILE = join(HISTORY_DIR, "published.yaml");
 
@@ -51,14 +53,19 @@ async function saveHistory(history) {
  */
 export async function getPublishHistory(sourcePath, hubUrl) {
   const history = await loadHistory();
-  const { origin } = new URL(hubUrl);
+  const hubKey = await getApiBaseUrl(hubUrl);
 
   const pathMappings = history.mappings[sourcePath];
   if (!pathMappings) {
     return null;
   }
 
-  const hubMapping = pathMappings[origin];
+  // Try new key format first, then fallback to legacy origin key
+  let hubMapping = pathMappings[hubKey];
+  if (!hubMapping) {
+    const { origin } = new URL(hubUrl);
+    hubMapping = pathMappings[origin];
+  }
   if (!hubMapping) {
     return null;
   }
@@ -75,13 +82,13 @@ export async function getPublishHistory(sourcePath, hubUrl) {
  */
 export async function savePublishHistory(sourcePath, hubUrl, did, title = "") {
   const history = await loadHistory();
-  const { origin } = new URL(hubUrl);
+  const hubKey = await getApiBaseUrl(hubUrl);
 
   if (!history.mappings[sourcePath]) {
     history.mappings[sourcePath] = {};
   }
 
-  history.mappings[sourcePath][origin] = {
+  history.mappings[sourcePath][hubKey] = {
     did,
     lastPublished: new Date().toISOString(),
     ...(title && { title }),

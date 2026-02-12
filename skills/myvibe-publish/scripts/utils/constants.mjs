@@ -8,6 +8,9 @@ import { fileURLToPath } from "node:url";
 // Default MyVibe URL
 export const VIBE_HUB_URL_DEFAULT = "https://www.myvibe.so";
 
+// MyVibe blocklet DID (used to resolve mount path via __blocklet__.js)
+export const MYVIBE_BLOCKLET_DID = "z2qa3cy63otaA2A7zHADRichVkSGVyevtYhYQ";
+
 // API endpoints
 export const API_PATHS = {
   // Upload file (HTML or ZIP)

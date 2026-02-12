@@ -9,6 +9,7 @@ import {
   AUTH_RETRY_COUNT,
   AUTH_FETCH_INTERVAL,
 } from "./constants.mjs";
+import { getApiBaseUrl } from "./blocklet-info.mjs";
 
 const TOKEN_KEY = "MYVIBE_ACCESS_TOKEN";
 
@@ -76,8 +77,6 @@ export async function clearAccessToken(hubUrl) {
  * @returns {Promise<string>} - The access token
  */
 export async function getAccessToken(hubUrl, locale = "en") {
-  const { hostname, origin } = new URL(hubUrl);
-
   // Check for cached token first
   let accessToken = await getCachedAccessToken(hubUrl);
   if (accessToken) {
@@ -85,7 +84,8 @@ export async function getAccessToken(hubUrl, locale = "en") {
   }
 
   // Need to get new token via authorization
-  const connectUrl = joinURL(origin, WELLKNOWN_SERVICE_PATH);
+  const apiBaseUrl = await getApiBaseUrl(hubUrl);
+  const connectUrl = joinURL(apiBaseUrl, WELLKNOWN_SERVICE_PATH);
 
   console.log(chalk.cyan("\nAuthorization required for MyVibe..."));
 

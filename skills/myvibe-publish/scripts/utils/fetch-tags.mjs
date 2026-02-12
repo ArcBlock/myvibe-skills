@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 
 import chalk from "chalk";
+import { joinURL } from "ufo";
 
 import { VIBE_HUB_URL_DEFAULT, isMainModule } from "./constants.mjs";
+import { getApiBaseUrl } from "./blocklet-info.mjs";
 
 // Tag types to fetch
 const TAG_TYPES = ["platform", "tech-stack", "model", "category"];
@@ -14,8 +16,8 @@ const TAG_TYPES = ["platform", "tech-stack", "model", "category"];
  * @returns {Promise<Array>} Tags array
  */
 async function fetchTagsByType(hubUrl, type) {
-  const { origin } = new URL(hubUrl);
-  const url = `${origin}/api/tags?type=${type}&isActive=true`;
+  const apiBaseUrl = await getApiBaseUrl(hubUrl);
+  const url = joinURL(apiBaseUrl, `/api/tags?type=${type}&isActive=true`);
 
   const response = await fetch(url, {
     method: "GET",

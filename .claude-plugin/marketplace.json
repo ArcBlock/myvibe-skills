@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "MyVibe Skills - AI-powered web page creation and MyVibe publishing capabilities, supporting static pages, Vite, Next.js and more",
-    "version": "0.0.25"
+    "version": "0.0.26"
   },
   "plugins": [
     {

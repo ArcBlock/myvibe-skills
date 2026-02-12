@@ -7,6 +7,7 @@ import { joinURL } from "ufo";
 
 import { API_PATHS } from "./constants.mjs";
 import { handleAuthError } from "./auth.mjs";
+import { getApiBaseUrl } from "./blocklet-info.mjs";
 
 /**
  * Upload a file to MyVibe using TUS protocol
@@ -20,9 +21,10 @@ import { handleAuthError } from "./auth.mjs";
 export async function uploadFile(filePath, hubUrl, accessToken, options = {}) {
   const { did } = options;
   const { origin } = new URL(hubUrl);
+  const apiBaseUrl = await getApiBaseUrl(hubUrl);
 
   // Build upload endpoint with optional did query parameter
-  let uploadEndpoint = joinURL(origin, API_PATHS.UPLOAD);
+  let uploadEndpoint = joinURL(apiBaseUrl, API_PATHS.UPLOAD);
   if (did) {
     uploadEndpoint = `${uploadEndpoint}?did=${encodeURIComponent(did)}`;
   }
@@ -193,8 +195,8 @@ async function readFileAsBuffer(filePath) {
  * @returns {Promise<{did: string, id: string}>}
  */
 export async function createVibeFromUrl(url, hubUrl, accessToken, metadata = {}) {
-  const { origin } = new URL(hubUrl);
-  const apiUrl = joinURL(origin, API_PATHS.VIBES_FROM_URL);
+  const apiBaseUrl = await getApiBaseUrl(hubUrl);
+  const apiUrl = joinURL(apiBaseUrl, API_PATHS.VIBES_FROM_URL);
 
   console.log(chalk.cyan(`\nImporting URL: ${url}`));
 
