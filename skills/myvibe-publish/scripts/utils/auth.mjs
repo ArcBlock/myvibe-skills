@@ -10,7 +10,7 @@ import {
   AUTH_FETCH_INTERVAL,
 } from "./constants.mjs";
 
-const TOKEN_KEY = "VIBE_HUB_ACCESS_TOKEN";
+const TOKEN_KEY = "MYVIBE_ACCESS_TOKEN";
 
 /**
  * Get cached access token for a given hub URL
@@ -22,7 +22,7 @@ export async function getCachedAccessToken(hubUrl) {
   const store = await createStore();
 
   // Check environment variable first
-  let accessToken = process.env.VIBE_HUB_ACCESS_TOKEN;
+  let accessToken = process.env.MYVIBE_ACCESS_TOKEN;
 
   // Check stored token
   if (!accessToken) {
@@ -97,7 +97,7 @@ export async function getAccessToken(hubUrl, locale = "en") {
       closeOnSuccess: true,
       appName: "MyVibe",
       appLogo:
-        "https://www.myvibe.so/image-bin/uploads/bd15c582471327539b56896cde77ad55.svg",
+        "https://www.myvibe.so/image-bin/uploads/6c26b2b5226ed0d554ac0b4ea0b6db38.jpeg",
       retry: AUTH_RETRY_COUNT,
       fetchInterval: AUTH_FETCH_INTERVAL,
       openPage: async (pageUrl) => {

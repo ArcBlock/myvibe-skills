@@ -11,7 +11,7 @@ const SERVICE_NAME = "myvibe-publish";
  * Uses system keyring when available, falls back to file storage
  */
 export async function createStore() {
-  const filepath = join(homedir(), ".aigne", CONFIG_FILENAME);
+  const filepath = join(homedir(), ".myvibe", CONFIG_FILENAME);
   const secretStore = await createSecretStore({
     filepath,
     serviceName: SERVICE_NAME,
