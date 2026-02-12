@@ -342,7 +342,13 @@ async function takeScreenshot(url, outputPath) {
       timeout: 30000,
     });
   } catch (error) {
-    throw new Error(`Failed to open URL in agent-browser: ${error.message}`);
+    if (error.killed) {
+      throw new Error(`Failed to open URL in agent-browser: timed out after 30s`);
+    }
+    // Non-timeout errors (e.g. page redirect destroying execution context)
+    // The browser may still be on the final page - wait and let screenshot verify
+    console.log(chalk.yellow(`agent-browser open exited with error (possibly due to page redirect), continuing...`));
+    await new Promise((resolve) => setTimeout(resolve, 3000));
   }
 
   // Wait for page to load
