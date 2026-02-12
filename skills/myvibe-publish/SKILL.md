@@ -47,9 +47,12 @@ Publish web content (HTML file, ZIP archive, or directory) to MyVibe.
 5. **Execute Publish** → script auto-reads screenshot result
 6. **Return Result** → show publish URL
 
-**First tool call - execute in parallel:**
+**First tool call - check dependencies and gather info in parallel:**
+- `Bash`: `test -d {skill_path}/scripts/node_modules || npm install --prefix {skill_path}/scripts`
 - `Read`: source file or main files in directory
 - `Bash`: `git remote get-url origin 2>/dev/null || echo "Not a git repo"`
+
+After dependencies are confirmed, fetch tags:
 - `Bash`: `node {skill_path}/scripts/utils/fetch-tags.mjs --hub {hub}`
 
 ---
@@ -103,8 +106,27 @@ After build completes, start screenshot in background (same check as Step 1: use
 
 ## Step 3: Metadata Analysis
 
-### Extract title
-Priority: `<title>` → `og:title` → package.json name → first `<h1>`
+### Generate title
+
+MyVibe generates page URLs from the title (e.g. "Interactive Solar System" → `interactive-solar-system`), so the title must be meaningful and descriptive.
+
+**Step 1 - Extract raw title candidates:**
+- `<title>` tag content
+- `og:title` meta content
+- `package.json` name field
+- First `<h1>` content
+
+**Step 2 - Evaluate and generate:**
+If the extracted title is generic or meaningless (e.g. "Document", "Untitled", "index", "app", "React App", "Vite App", single characters, or package-name-style like "my-app"), generate a better title based on:
+- What the project actually does (from source code, README, conversation context)
+- The visual content and purpose of the page
+
+**Title requirements:**
+- 2-6 words, concise and descriptive
+- Describes the content/purpose, not the technology (e.g. "Interactive Solar System" not "Three.js Demo")
+- No filler words like "app", "demo", "project", "page" unless essential to meaning
+- English words, proper capitalization (Title Case)
+- If `--title` was explicitly provided by user, always use it as-is
 
 ### Generate description (50-150 words, story-style)
 
@@ -157,7 +179,6 @@ Options: "Publish" / "Edit details"
 
 ## Step 5: Execute Publish
 
-**Check dependencies**: If `scripts/node_modules` missing, run `npm install` first.
 The publish script automatically reads the screenshot result file. Execute publish directly:
 
 Pass config via stdin:
@@ -184,6 +205,26 @@ EOF
 - `did` optional - for explicit version updates
 - `coverImage` auto-read from `/tmp/myvibe-screenshot-{hash}.json`
 - Screenshot result file cleaned up after publish
+
+### Retry after action failure
+
+If the publish script output contains `retryHint: skip-upload` or shows "Upload was successful. DID: ...", do NOT re-run the full publish command. Instead, use `skipUpload` with the DID from the output to retry only the publish action:
+
+```bash
+node {skill_path}/scripts/publish.mjs --config-stdin <<'EOF'
+{
+  "source": { "type": "dir", "path": "./dist", "skipUpload": true, "did": "<DID from error output>" },
+  "hub": "https://www.myvibe.so",
+  "metadata": {
+    "title": "My App",
+    "description": "Story description here",
+    "visibility": "public"
+  }
+}
+EOF
+```
+
+This reuses the already-uploaded content and only retries the publish action, avoiding duplicate records.
 
 ---
 
@@ -219,6 +260,7 @@ The script prints an upgrade prompt when updating an existing Vibe without versi
 | Screenshot failed | Skip coverImage, proceed without it |
 | agent-browser missing | Run `npm install -g agent-browser && agent-browser install` |
 | Script execution failed (network/sandbox) | Check if network permissions are enabled. Add `sandbox_permissions=require_escalated` and retry |
+| Publish action failed (upload succeeded) | Use `skipUpload: true` with DID from error output to retry action only |
 | Private mode is only available for Creator and Studio users | See "Private Mode Error Handling" below |
 
 ### Private Mode Error Handling

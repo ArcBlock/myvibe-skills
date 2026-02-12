@@ -17,11 +17,11 @@ import { getPublishHistory, savePublishHistory } from "./utils/history.mjs";
 /**
  * Try to read screenshot result from file with retries
  * @param {string} sourcePath - The source path (dir or file) for hash calculation
- * @param {number} maxRetries - Maximum number of retries (default: 3)
+ * @param {number} maxRetries - Maximum number of retries (default: 10)
  * @param {number} retryDelay - Delay between retries in ms (default: 3000)
  * @returns {Promise<{success: boolean, url?: string, resultPath?: string}>}
  */
-async function readScreenshotResult(sourcePath, maxRetries = 3, retryDelay = 3000) {
+async function readScreenshotResult(sourcePath, maxRetries = 10, retryDelay = 3000) {
   const resultPath = getScreenshotResultPath(sourcePath);
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -79,18 +79,21 @@ async function publish(options) {
     // Version control options
     did: explicitDid,
     newVibe = false,
+    skipUpload = false,
   } = options;
 
   let cleanup = null;
 
   try {
     // Validate input
-    const inputCount = [file, dir, url].filter(Boolean).length;
-    if (inputCount === 0) {
-      throw new Error("Please provide one of: --file, --dir, or --url");
-    }
-    if (inputCount > 1) {
-      throw new Error("Please provide only one of: --file, --dir, or --url");
+    if (!skipUpload) {
+      const inputCount = [file, dir, url].filter(Boolean).length;
+      if (inputCount === 0) {
+        throw new Error("Please provide one of: --file, --dir, or --url");
+      }
+      if (inputCount > 1) {
+        throw new Error("Please provide only one of: --file, --dir, or --url");
+      }
     }
 
     console.log(chalk.bold("\n🚀 MyVibe Publish\n"));
@@ -126,7 +129,15 @@ async function publish(options) {
     let needsConversion = false;
     let versionHistoryEnabled;
 
-    if (url) {
+    if (skipUpload) {
+      // Skip upload mode: reuse existing DID, only retry publish action
+      if (!explicitDid) {
+        throw new Error("--skip-upload requires --did <DID> to specify the existing upload");
+      }
+      did = explicitDid;
+      needsConversion = false;
+      console.log(chalk.cyan(`Skipping upload, using existing DID: ${did}`));
+    } else if (url) {
       // URL import mode
       const result = await createVibeFromUrl(url, hub, accessToken, {
         title,
@@ -251,7 +262,20 @@ async function publish(options) {
     if (categoryTags && categoryTags.length > 0) actionData.categoryTags = categoryTags;
     if (modelTags && modelTags.length > 0) actionData.modelTags = modelTags;
 
-    const actionResult = await apiPatch(actionUrl, actionData, accessToken, hub);
+    let actionResult;
+    try {
+      actionResult = await apiPatch(actionUrl, actionData, accessToken, hub);
+    } catch (actionError) {
+      console.error(chalk.red(`\n❌ Publish action failed: ${actionError.message}`));
+      console.error(chalk.yellow(`\n📌 Upload was successful. DID: ${did}`));
+      console.error(chalk.yellow(`To retry the publish action without re-uploading, use --skip-upload --did ${did}`));
+      return {
+        success: false,
+        error: actionError.message,
+        did,
+        retryHint: "skip-upload",
+      };
+    }
 
     if (actionResult.success) {
       console.log(chalk.green.bold("\n✅ Published successfully!\n"));
@@ -342,6 +366,9 @@ function parseConfig(config) {
     // Optional explicit DID for version update
     if (config.source.did) {
       options.did = config.source.did;
+    }
+    if (config.source.skipUpload) {
+      options.skipUpload = true;
     }
   }
 
@@ -486,6 +513,9 @@ function parseArgs(args) {
       case "--new":
         options.newVibe = true;
         break;
+      case "--skip-upload":
+        options.skipUpload = true;
+        break;
       case "--config-stdin":
         options.configStdin = true;
         break;
@@ -523,6 +553,7 @@ ${chalk.bold("Options:")}
   --visibility, -v <vis>  Visibility: public or private (default: public)
   --did <did>             Vibe DID for version update (overrides auto-detection)
   --new                   Force create new Vibe, ignore publish history
+  --skip-upload           Skip file upload, retry publish action only (requires --did)
   --help                  Show this help message
 
 ${chalk.bold("Config File Format (YAML):")}
