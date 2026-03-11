@@ -136,7 +136,9 @@ export async function getAccessToken(hubUrl, locale = "en") {
         `  • Network issue\n` +
         `  • Authorization timeout (5 minutes)\n` +
         `  • User cancelled authorization\n\n` +
-        `${chalk.bold("Solution:")} Please try again.`,
+        `${chalk.bold("Solutions:")}\n` +
+        `  1. Try again with the publish command\n` +
+        `  2. Get a ready-to-use prompt from: ${hubUrl.replace(/\/$/, "")}/openclaw\n`,
     );
   }
 }

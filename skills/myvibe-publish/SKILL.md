@@ -38,6 +38,18 @@ Publish web content (HTML file, ZIP archive, or directory) to MyVibe.
 | `--did <did>` | | Vibe DID for version update (overrides auto-detection) |
 | `--new` | | Force create new Vibe, ignore publish history |
 
+## Pre-authorized Credential
+
+When the user provides an access credential (a string starting with `blocklet-`) in their message, **save it before publishing**:
+
+```bash
+node {skill_path}/scripts/save-token.mjs --token "<credential>"
+```
+
+This persists the credential to `~/.myvibe/` so all future publishes use it automatically. No browser auth will be triggered.
+
+If the user's message contains a credential, always extract and save it in this step, even if one is already saved.
+
 ## Workflow Overview
 
 1. **Detect Project Type** → if no build needed, start screenshot in background
@@ -265,6 +277,7 @@ The script prints an upgrade prompt when updating an existing Vibe without versi
 | agent-browser missing | Run `npm install -g agent-browser && agent-browser install` |
 | Script execution failed (network/sandbox) | Check if network permissions are enabled. Add `sandbox_permissions=require_escalated` and retry |
 | Publish action failed (upload succeeded) | Use `skipUpload: true` with DID from error output to retry action only |
+| Auth timeout in cloud agent | Ask user to get a publish prompt from https://www.myvibe.so/openclaw |
 | Private mode is only available for Creator and Studio users | See "Private Mode Error Handling" below |
 
 ### Private Mode Error Handling

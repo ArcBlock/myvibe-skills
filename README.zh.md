@@ -81,6 +81,16 @@ npx skills add ArcBlock/myvibe-skills
 
 </details>
 
+## 在 OpenClaw 中使用
+
+通过 OpenClaw 发布你的项目：
+
+1. 访问 [MyVibe OpenClaw 页面](https://www.myvibe.so/openclaw)
+2. 登录并点击「生成发布 Prompt」
+3. 复制 Prompt 粘贴到 OpenClaw 中
+
+Prompt 包含技能安装、凭证配置和发布指令 — OpenClaw 会自动完成剩余步骤。凭证会自动保存，跨会话持续有效。
+
 ## 快速开始
 
 用自然语言告诉 AI 助手你想做什么：
