@@ -7,7 +7,7 @@ import chalk from "chalk";
 import { joinURL } from "ufo";
 import yaml from "js-yaml";
 
-import { VIBE_HUB_URL_DEFAULT, API_PATHS, getScreenshotResultPath, isMainModule } from "./utils/constants.mjs";
+import { VIBE_HUB_URL_DEFAULT, API_PATHS, getScreenshotResultPath, isMainModule, validateHubUrl, validateVisibility, validateFilePath } from "./utils/constants.mjs";
 import { getAccessToken } from "./utils/auth.mjs";
 import { getApiBaseUrl } from "./utils/blocklet-info.mjs";
 import { apiPatch, apiGet, subscribeToSSE, pollConversionStatus } from "./utils/http.mjs";
@@ -97,6 +97,10 @@ async function publish(options) {
       }
     }
 
+    // Validate inputs
+    validateHubUrl(hub);
+    validateVisibility(visibility);
+
     console.log(chalk.bold("\n🚀 MyVibe Publish\n"));
     console.log(chalk.gray(`Hub: ${hub}`));
 
@@ -154,6 +158,7 @@ async function publish(options) {
 
       if (dir) {
         // Compress directory first
+        validateFilePath(dir);
         const dirPath = resolve(dir);
         if (!existsSync(dirPath)) {
           throw new Error(`Directory not found: ${dirPath}`);
@@ -168,6 +173,7 @@ async function publish(options) {
         cleanup = zipResult.cleanup;
       } else {
         // Use provided file
+        validateFilePath(file);
         filePath = resolve(file);
         if (!existsSync(filePath)) {
           throw new Error(`File not found: ${filePath}`);

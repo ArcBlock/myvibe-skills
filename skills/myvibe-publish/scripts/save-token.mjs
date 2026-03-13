@@ -3,6 +3,7 @@
 // Saves the access credential to ~/.myvibe/myvibe-connected.yaml
 
 import { parseArgs } from "node:util";
+import { validateToken, validateHubUrl } from "./utils/constants.mjs";
 
 const { values } = parseArgs({
   options: {
@@ -15,6 +16,9 @@ if (!values.token) {
   console.error("Usage: node save-token.mjs --token <token> [--hub <hub-url>]");
   process.exit(1);
 }
+
+validateToken(values.token);
+validateHubUrl(values.hub);
 
 // Reuse existing store logic
 const { createStore } = await import("./utils/store.mjs");

@@ -1,5 +1,6 @@
 import chalk from "chalk";
 import { handleAuthError } from "./auth.mjs";
+import { SSE_TIMEOUT } from "./constants.mjs";
 
 /**
  * Make an authenticated API request
@@ -99,6 +100,9 @@ export async function apiPatch(url, data, accessToken, hubUrl) {
 export async function subscribeToSSE(url, accessToken, hubUrl, callbacks) {
   const { onMessage, onProgress, onCompleted, onError } = callbacks;
 
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), SSE_TIMEOUT);
+
   try {
     const response = await fetch(url, {
       method: "GET",
@@ -107,6 +111,7 @@ export async function subscribeToSSE(url, accessToken, hubUrl, callbacks) {
         Accept: "text/event-stream",
         "Cache-Control": "no-cache",
       },
+      signal: controller.signal,
     });
 
     if (!response.ok) {
@@ -171,8 +176,15 @@ export async function subscribeToSSE(url, accessToken, hubUrl, callbacks) {
       }
     }
   } catch (error) {
+    if (error.name === "AbortError") {
+      const msg = "SSE connection timed out";
+      onError?.(msg);
+      throw new Error(msg);
+    }
     onError?.(error.message || error);
     throw error;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
