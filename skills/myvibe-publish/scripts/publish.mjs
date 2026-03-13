@@ -1,19 +1,19 @@
 #!/usr/bin/env node
 
-import { existsSync, readFileSync, unlinkSync } from "node:fs";
-import { stat } from "node:fs/promises";
-import { resolve } from "node:path";
-import chalk from "chalk";
-import { joinURL } from "ufo";
-import yaml from "js-yaml";
+import { existsSync, readFileSync, unlinkSync } from 'node:fs'
+import { stat } from 'node:fs/promises'
+import { resolve } from 'node:path'
+import chalk from 'chalk'
+import { joinURL } from 'ufo'
+import yaml from 'js-yaml'
 
-import { VIBE_HUB_URL_DEFAULT, API_PATHS, getScreenshotResultPath, isMainModule } from "./utils/constants.mjs";
-import { getAccessToken } from "./utils/auth.mjs";
-import { getApiBaseUrl } from "./utils/blocklet-info.mjs";
-import { apiPatch, apiGet, subscribeToSSE, pollConversionStatus } from "./utils/http.mjs";
-import { zipDirectory, getFileInfo } from "./utils/zip.mjs";
-import { uploadFile, createVibeFromUrl } from "./utils/upload.mjs";
-import { getPublishHistory, savePublishHistory } from "./utils/history.mjs";
+import { VIBE_HUB_URL_DEFAULT, API_PATHS, getScreenshotResultPath, isMainModule } from './utils/constants.mjs'
+import { getAccessToken } from './utils/auth.mjs'
+import { getApiBaseUrl } from './utils/blocklet-info.mjs'
+import { apiPatch, apiGet, subscribeToSSE, pollConversionStatus } from './utils/http.mjs'
+import { zipDirectory, getFileInfo } from './utils/zip.mjs'
+import { uploadFile, createVibeFromUrl } from './utils/upload.mjs'
+import { getPublishHistory, savePublishHistory } from './utils/history.mjs'
 
 /**
  * Try to read screenshot result from file with retries
@@ -23,37 +23,39 @@ import { getPublishHistory, savePublishHistory } from "./utils/history.mjs";
  * @returns {Promise<{success: boolean, url?: string, resultPath?: string}>}
  */
 async function readScreenshotResult(sourcePath, maxRetries = 10, retryDelay = 3000) {
-  const resultPath = getScreenshotResultPath(sourcePath);
+  const resultPath = getScreenshotResultPath(sourcePath)
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       if (existsSync(resultPath)) {
-        const content = readFileSync(resultPath, "utf-8");
-        const result = JSON.parse(content);
+        const content = readFileSync(resultPath, 'utf-8')
+        const result = JSON.parse(content)
 
         if (result.success && result.url) {
-          console.log(chalk.green(`✓ Screenshot ready: ${result.url}`));
-          return { ...result, resultPath };
+          console.log(chalk.green(`✓ Screenshot ready: ${result.url}`))
+          return { ...result, resultPath }
         } else {
           // Screenshot failed, don't retry
-          console.log(chalk.yellow(`Screenshot generation failed: ${result.error || "Unknown error"}`));
-          return { success: false, resultPath };
+          console.log(chalk.yellow(`Screenshot generation failed: ${result.error || 'Unknown error'}`))
+          return { success: false, resultPath }
         }
       }
     } catch (error) {
       // JSON parse error or other issues
-      console.log(chalk.yellow(`Failed to read screenshot result: ${error.message}`));
+      console.log(chalk.yellow(`Failed to read screenshot result: ${error.message}`))
     }
 
     // File not found, wait and retry (except on last attempt)
     if (attempt < maxRetries) {
-      console.log(chalk.gray(`Screenshot not ready, waiting ${retryDelay / 1000}s... (attempt ${attempt}/${maxRetries})`));
-      await new Promise((resolve) => setTimeout(resolve, retryDelay));
+      console.log(
+        chalk.gray(`Screenshot not ready, waiting ${retryDelay / 1000}s... (attempt ${attempt}/${maxRetries})`)
+      )
+      await new Promise((resolve) => setTimeout(resolve, retryDelay))
     }
   }
 
-  console.log(chalk.yellow("Screenshot not available, proceeding without cover image"));
-  return { success: false, resultPath };
+  console.log(chalk.yellow('Screenshot not available, proceeding without cover image'))
+  return { success: false, resultPath }
 }
 
 /**
@@ -67,7 +69,7 @@ async function publish(options) {
     hub = VIBE_HUB_URL_DEFAULT,
     title,
     desc,
-    visibility = "public",
+    visibility = 'public',
     // Extended metadata fields from config
     coverImage,
     githubRepo,
@@ -81,226 +83,226 @@ async function publish(options) {
     did: explicitDid,
     newVibe = false,
     skipUpload = false,
-  } = options;
+  } = options
 
-  let cleanup = null;
+  let cleanup = null
 
   try {
     // Validate input
     if (!skipUpload) {
-      const inputCount = [file, dir, url].filter(Boolean).length;
+      const inputCount = [file, dir, url].filter(Boolean).length
       if (inputCount === 0) {
-        throw new Error("Please provide one of: --file, --dir, or --url");
+        throw new Error('Please provide one of: --file, --dir, or --url')
       }
       if (inputCount > 1) {
-        throw new Error("Please provide only one of: --file, --dir, or --url");
+        throw new Error('Please provide only one of: --file, --dir, or --url')
       }
     }
 
-    console.log(chalk.bold("\n🚀 MyVibe Publish\n"));
-    console.log(chalk.gray(`Hub: ${hub}`));
+    console.log(chalk.bold('\n🚀 MyVibe Publish\n'))
+    console.log(chalk.gray(`Hub: ${hub}`))
 
     // Get authorization
-    const accessToken = await getAccessToken(hub);
+    const accessToken = await getAccessToken(hub)
 
     // Resolve source path for history lookup
-    let sourcePath = null;
+    let sourcePath = null
     if (dir) {
-      sourcePath = resolve(dir);
+      sourcePath = resolve(dir)
     } else if (file) {
-      sourcePath = resolve(file);
+      sourcePath = resolve(file)
     } else if (url) {
-      sourcePath = url;
+      sourcePath = url
     }
 
     // Determine DID for version update
-    let existingDid = null;
+    let existingDid = null
     if (!newVibe) {
       if (explicitDid) {
-        existingDid = explicitDid;
+        existingDid = explicitDid
       } else if (sourcePath) {
-        const history = await getPublishHistory(sourcePath, hub);
+        const history = await getPublishHistory(sourcePath, hub)
         if (history) {
-          existingDid = history.did;
+          existingDid = history.did
         }
       }
     }
 
-    let did;
-    let needsConversion = false;
-    let versionHistoryEnabled;
+    let did
+    let needsConversion = false
+    let versionHistoryEnabled
 
     if (skipUpload) {
       // Skip upload mode: reuse existing DID, only retry publish action
       if (!explicitDid) {
-        throw new Error("--skip-upload requires --did <DID> to specify the existing upload");
+        throw new Error('--skip-upload requires --did <DID> to specify the existing upload')
       }
-      did = explicitDid;
-      needsConversion = false;
-      console.log(chalk.cyan(`Skipping upload, using existing DID: ${did}`));
+      did = explicitDid
+      needsConversion = false
+      console.log(chalk.cyan(`Skipping upload, using existing DID: ${did}`))
     } else if (url) {
       // URL import mode
       const result = await createVibeFromUrl(url, hub, accessToken, {
         title,
         description: desc,
         visibility,
-      });
-      did = result.did;
+      })
+      did = result.did
       // URL imports don't need conversion
-      needsConversion = false;
+      needsConversion = false
     } else {
       // File or directory upload mode
-      let filePath;
+      let filePath
 
       if (dir) {
         // Compress directory first
-        const dirPath = resolve(dir);
+        const dirPath = resolve(dir)
         if (!existsSync(dirPath)) {
-          throw new Error(`Directory not found: ${dirPath}`);
+          throw new Error(`Directory not found: ${dirPath}`)
         }
-        const dirStat = await stat(dirPath);
+        const dirStat = await stat(dirPath)
         if (!dirStat.isDirectory()) {
-          throw new Error(`Not a directory: ${dirPath}`);
+          throw new Error(`Not a directory: ${dirPath}`)
         }
 
-        const zipResult = await zipDirectory(dirPath);
-        filePath = zipResult.zipPath;
-        cleanup = zipResult.cleanup;
+        const zipResult = await zipDirectory(dirPath)
+        filePath = zipResult.zipPath
+        cleanup = zipResult.cleanup
       } else {
         // Use provided file
-        filePath = resolve(file);
+        filePath = resolve(file)
         if (!existsSync(filePath)) {
-          throw new Error(`File not found: ${filePath}`);
+          throw new Error(`File not found: ${filePath}`)
         }
 
-        const fileInfo = await getFileInfo(filePath);
-        if (fileInfo.type !== "application/zip" && fileInfo.type !== "text/html") {
-          throw new Error(`Unsupported file type: ${fileInfo.type}. Only ZIP and HTML files are supported.`);
+        const fileInfo = await getFileInfo(filePath)
+        if (fileInfo.type !== 'application/zip' && fileInfo.type !== 'text/html') {
+          throw new Error(`Unsupported file type: ${fileInfo.type}. Only ZIP and HTML files are supported.`)
         }
       }
 
       // Upload file with optional existing DID for version update
-      const uploadResult = await uploadFile(filePath, hub, accessToken, { did: existingDid });
-      did = uploadResult.did;
-      needsConversion = uploadResult.status === "PENDING";
-      versionHistoryEnabled = uploadResult.versionHistoryEnabled;
+      const uploadResult = await uploadFile(filePath, hub, accessToken, { did: existingDid })
+      did = uploadResult.did
+      needsConversion = uploadResult.status === 'PENDING'
+      versionHistoryEnabled = uploadResult.versionHistoryEnabled
     }
 
     // Wait for conversion if needed
     if (needsConversion) {
-      console.log(chalk.cyan("\nWaiting for conversion..."));
+      console.log(chalk.cyan('\nWaiting for conversion...'))
 
-      const apiBaseUrl = await getApiBaseUrl(hub);
-      const streamUrl = joinURL(apiBaseUrl, API_PATHS.CONVERT_STREAM(did));
-      const statusUrl = joinURL(apiBaseUrl, API_PATHS.CONVERSION_STATUS(did));
+      const apiBaseUrl = await getApiBaseUrl(hub)
+      const streamUrl = joinURL(apiBaseUrl, API_PATHS.CONVERT_STREAM(did))
+      const statusUrl = joinURL(apiBaseUrl, API_PATHS.CONVERSION_STATUS(did))
 
       try {
         // Try SSE stream first
         await subscribeToSSE(streamUrl, accessToken, hub, {
           onMessage: (message) => {
-            console.log(chalk.gray(`  ${message}`));
+            console.log(chalk.gray(`  ${message}`))
           },
           onProgress: (data) => {
             if (data.message) {
-              console.log(chalk.gray(`  ${data.message}`));
+              console.log(chalk.gray(`  ${data.message}`))
             }
           },
-          onCompleted: (data) => {
-            console.log(chalk.green("\n✅ Conversion completed!"));
+          onCompleted: () => {
+            console.log(chalk.green('\n✅ Conversion completed!'))
           },
           onError: (error) => {
-            console.log(chalk.red(`\n❌ Conversion error: ${error}`));
+            console.log(chalk.red(`\n❌ Conversion error: ${error}`))
           },
-        });
-      } catch (sseError) {
+        })
+      } catch {
         // Fallback to polling if SSE fails
-        console.log(chalk.yellow("SSE connection failed, using polling..."));
+        console.log(chalk.yellow('SSE connection failed, using polling...'))
         await pollConversionStatus(statusUrl, accessToken, hub, {
           onProgress: (status) => {
-            console.log(chalk.gray(`  Status: ${status.status}`));
+            console.log(chalk.gray(`  Status: ${status.status}`))
           },
-          onCompleted: (status) => {
-            console.log(chalk.green("\n✅ Conversion completed!"));
+          onCompleted: () => {
+            console.log(chalk.green('\n✅ Conversion completed!'))
           },
           onError: (error) => {
-            console.log(chalk.red(`\n❌ Conversion error: ${error}`));
+            console.log(chalk.red(`\n❌ Conversion error: ${error}`))
           },
-        });
+        })
       }
     }
 
     // Try to read screenshot result from file (if not already provided)
     // Only for dir/file mode, not URL import
-    let finalCoverImage = coverImage;
-    let screenshotResultPath = null;
+    let finalCoverImage = coverImage
+    let screenshotResultPath = null
     if (!finalCoverImage && sourcePath && !url) {
-      console.log(chalk.cyan("\nChecking for screenshot..."));
-      const screenshotResult = await readScreenshotResult(sourcePath);
-      screenshotResultPath = screenshotResult.resultPath;
+      console.log(chalk.cyan('\nChecking for screenshot...'))
+      const screenshotResult = await readScreenshotResult(sourcePath)
+      screenshotResultPath = screenshotResult.resultPath
       if (screenshotResult.success && screenshotResult.url) {
-        finalCoverImage = screenshotResult.url;
+        finalCoverImage = screenshotResult.url
       }
     }
 
     // Execute publish action
-    console.log(chalk.cyan("\nPublishing..."));
+    console.log(chalk.cyan('\nPublishing...'))
 
-    const apiBaseUrl = await getApiBaseUrl(hub);
-    const actionUrl = joinURL(apiBaseUrl, API_PATHS.VIBE_ACTION(did));
+    const apiBaseUrl = await getApiBaseUrl(hub)
+    const actionUrl = joinURL(apiBaseUrl, API_PATHS.VIBE_ACTION(did))
 
     const actionData = {
-      action: "publish",
-    };
+      action: 'publish',
+    }
 
-    if (title) actionData.title = title;
-    if (desc) actionData.description = desc;
-    if (visibility) actionData.visibility = visibility;
+    if (title) actionData.title = title
+    if (desc) actionData.description = desc
+    if (visibility) actionData.visibility = visibility
     // Extended metadata fields
-    if (finalCoverImage) actionData.coverImage = finalCoverImage;
-    if (githubRepo) actionData.githubRepo = githubRepo;
-    if (platformTags && platformTags.length > 0) actionData.platformTags = platformTags;
-    if (techStackTags && techStackTags.length > 0) actionData.techStackTags = techStackTags;
-    if (categoryTags && categoryTags.length > 0) actionData.categoryTags = categoryTags;
-    if (modelTags && modelTags.length > 0) actionData.modelTags = modelTags;
+    if (finalCoverImage) actionData.coverImage = finalCoverImage
+    if (githubRepo) actionData.githubRepo = githubRepo
+    if (platformTags && platformTags.length > 0) actionData.platformTags = platformTags
+    if (techStackTags && techStackTags.length > 0) actionData.techStackTags = techStackTags
+    if (categoryTags && categoryTags.length > 0) actionData.categoryTags = categoryTags
+    if (modelTags && modelTags.length > 0) actionData.modelTags = modelTags
 
-    let actionResult;
+    let actionResult
     try {
-      actionResult = await apiPatch(actionUrl, actionData, accessToken, hub);
+      actionResult = await apiPatch(actionUrl, actionData, accessToken, hub)
     } catch (actionError) {
-      console.error(chalk.red(`\n❌ Publish action failed: ${actionError.message}`));
-      console.error(chalk.yellow(`\n📌 Upload was successful. DID: ${did}`));
-      console.error(chalk.yellow(`To retry the publish action without re-uploading, use --skip-upload --did ${did}`));
+      console.error(chalk.red(`\n❌ Publish action failed: ${actionError.message}`))
+      console.error(chalk.yellow(`\n📌 Upload was successful. DID: ${did}`))
+      console.error(chalk.yellow(`To retry the publish action without re-uploading, use --skip-upload --did ${did}`))
       return {
         success: false,
         error: actionError.message,
         did,
-        retryHint: "skip-upload",
-      };
+        retryHint: 'skip-upload',
+      }
     }
 
     if (actionResult.success) {
-      console.log(chalk.green.bold("\n✅ Published successfully!\n"));
+      console.log(chalk.green.bold('\n✅ Published successfully!\n'))
 
-      let vibeUrl = actionResult.contentUrl;
+      let vibeUrl = actionResult.contentUrl
       if (!vibeUrl) {
-        const vibeInfoUrl = joinURL(apiBaseUrl, API_PATHS.VIBE_INFO(did));
-        const vibeInfo = await apiGet(vibeInfoUrl, accessToken, hub);
-        vibeUrl = joinURL(hub, vibeInfo.userDid, did);
+        const vibeInfoUrl = joinURL(apiBaseUrl, API_PATHS.VIBE_INFO(did))
+        const vibeInfo = await apiGet(vibeInfoUrl, accessToken, hub)
+        vibeUrl = joinURL(hub, vibeInfo.userDid, did)
       }
-      console.log(chalk.cyan(`🔗 ${vibeUrl}\n`));
+      console.log(chalk.cyan(`🔗 ${vibeUrl}\n`))
 
       // Upgrade prompt: updating existing project + version history not enabled
       if (existingDid && versionHistoryEnabled === false) {
-        const pricingUrl = joinURL(hub, "pricing");
-        console.log(chalk.yellow("📦 Previous version overwritten. Want to keep version history?"));
-        console.log(chalk.yellow(`   Upgrade to Creator → ${pricingUrl}\n`));
+        const pricingUrl = joinURL(hub, 'pricing')
+        console.log(chalk.yellow('📦 Previous version overwritten. Want to keep version history?'))
+        console.log(chalk.yellow(`   Upgrade to Creator → ${pricingUrl}\n`))
       }
 
       // Save publish history for future version updates
       if (sourcePath) {
         try {
-          await savePublishHistory(sourcePath, hub, did, title || "");
-        } catch (e) {
+          await savePublishHistory(sourcePath, hub, did, title || '')
+        } catch {
           // Ignore history save errors
         }
       }
@@ -308,9 +310,9 @@ async function publish(options) {
       // Delete config file after successful publish
       if (configPath && existsSync(configPath)) {
         try {
-          unlinkSync(configPath);
-          console.log(chalk.gray(`Cleaned up config file: ${configPath}`));
-        } catch (e) {
+          unlinkSync(configPath)
+          console.log(chalk.gray(`Cleaned up config file: ${configPath}`))
+        } catch {
           // Ignore cleanup errors
         }
       }
@@ -318,9 +320,9 @@ async function publish(options) {
       // Delete screenshot result file after successful publish
       if (screenshotResultPath && existsSync(screenshotResultPath)) {
         try {
-          unlinkSync(screenshotResultPath);
-          console.log(chalk.gray(`Cleaned up screenshot result: ${screenshotResultPath}`));
-        } catch (e) {
+          unlinkSync(screenshotResultPath)
+          console.log(chalk.gray(`Cleaned up screenshot result: ${screenshotResultPath}`))
+        } catch {
           // Ignore cleanup errors
         }
       }
@@ -329,20 +331,20 @@ async function publish(options) {
         success: true,
         did,
         url: vibeUrl,
-      };
+      }
     } else {
-      throw new Error(actionResult.error || "Publish action failed");
+      throw new Error(actionResult.error || 'Publish action failed')
     }
   } catch (error) {
-    console.error(chalk.red(`\n❌ Error: ${error.message}\n`));
+    console.error(chalk.red(`\n❌ Error: ${error.message}\n`))
     return {
       success: false,
       error: error.message,
-    };
+    }
   } finally {
     // Cleanup temp files
     if (cleanup) {
-      await cleanup();
+      await cleanup()
     }
   }
 }
@@ -353,43 +355,43 @@ async function publish(options) {
  * @returns {Object} - Options object
  */
 function parseConfig(config) {
-  const options = {};
+  const options = {}
 
   // Parse source
   if (config.source) {
-    if (config.source.type === "dir") {
-      options.dir = config.source.path;
-    } else if (config.source.type === "file") {
-      options.file = config.source.path;
-    } else if (config.source.type === "url") {
-      options.url = config.source.path;
+    if (config.source.type === 'dir') {
+      options.dir = config.source.path
+    } else if (config.source.type === 'file') {
+      options.file = config.source.path
+    } else if (config.source.type === 'url') {
+      options.url = config.source.path
     }
     // Optional explicit DID for version update
     if (config.source.did) {
-      options.did = config.source.did;
+      options.did = config.source.did
     }
     if (config.source.skipUpload) {
-      options.skipUpload = true;
+      options.skipUpload = true
     }
   }
 
   // Parse metadata
   if (config.metadata) {
-    if (config.metadata.title) options.title = config.metadata.title;
-    if (config.metadata.description) options.desc = config.metadata.description;
-    if (config.metadata.visibility) options.visibility = config.metadata.visibility;
-    if (config.metadata.coverImage) options.coverImage = config.metadata.coverImage;
-    if (config.metadata.githubRepo) options.githubRepo = config.metadata.githubRepo;
-    if (config.metadata.platformTags) options.platformTags = config.metadata.platformTags;
-    if (config.metadata.techStackTags) options.techStackTags = config.metadata.techStackTags;
-    if (config.metadata.categoryTags) options.categoryTags = config.metadata.categoryTags;
-    if (config.metadata.modelTags) options.modelTags = config.metadata.modelTags;
+    if (config.metadata.title) options.title = config.metadata.title
+    if (config.metadata.description) options.desc = config.metadata.description
+    if (config.metadata.visibility) options.visibility = config.metadata.visibility
+    if (config.metadata.coverImage) options.coverImage = config.metadata.coverImage
+    if (config.metadata.githubRepo) options.githubRepo = config.metadata.githubRepo
+    if (config.metadata.platformTags) options.platformTags = config.metadata.platformTags
+    if (config.metadata.techStackTags) options.techStackTags = config.metadata.techStackTags
+    if (config.metadata.categoryTags) options.categoryTags = config.metadata.categoryTags
+    if (config.metadata.modelTags) options.modelTags = config.metadata.modelTags
   }
 
   // Parse hub URL (can be at root level)
-  if (config.hub) options.hub = config.hub;
+  if (config.hub) options.hub = config.hub
 
-  return options;
+  return options
 }
 
 /**
@@ -398,41 +400,41 @@ function parseConfig(config) {
  */
 async function loadConfigFromStdin() {
   return new Promise((resolve, reject) => {
-    let data = "";
+    let data = ''
 
     // Set encoding
-    process.stdin.setEncoding("utf8");
+    process.stdin.setEncoding('utf8')
 
     // Check if stdin has data (not a TTY)
     if (process.stdin.isTTY) {
-      reject(new Error("No data provided via stdin. Use: echo '{...}' | node publish.mjs --config-stdin"));
-      return;
+      reject(new Error("No data provided via stdin. Use: echo '{...}' | node publish.mjs --config-stdin"))
+      return
     }
 
-    process.stdin.on("data", (chunk) => {
-      data += chunk;
-    });
+    process.stdin.on('data', (chunk) => {
+      data += chunk
+    })
 
-    process.stdin.on("end", () => {
+    process.stdin.on('end', () => {
       try {
-        const config = JSON.parse(data);
-        resolve(parseConfig(config));
+        const config = JSON.parse(data)
+        resolve(parseConfig(config))
       } catch (e) {
-        reject(new Error(`Failed to parse JSON from stdin: ${e.message}`));
+        reject(new Error(`Failed to parse JSON from stdin: ${e.message}`))
       }
-    });
+    })
 
-    process.stdin.on("error", (err) => {
-      reject(new Error(`Failed to read from stdin: ${err.message}`));
-    });
+    process.stdin.on('error', (err) => {
+      reject(new Error(`Failed to read from stdin: ${err.message}`))
+    })
 
     // Timeout after 5 seconds if no data
     setTimeout(() => {
       if (!data) {
-        reject(new Error("Timeout waiting for stdin data"));
+        reject(new Error('Timeout waiting for stdin data'))
       }
-    }, 5000);
-  });
+    }, 5000)
+  })
 }
 
 /**
@@ -441,93 +443,94 @@ async function loadConfigFromStdin() {
  * @returns {Object} - Parsed options
  */
 function loadConfigFile(configPath) {
-  const absolutePath = resolve(configPath);
+  const absolutePath = resolve(configPath)
   if (!existsSync(absolutePath)) {
-    throw new Error(`Config file not found: ${absolutePath}`);
+    throw new Error(`Config file not found: ${absolutePath}`)
   }
 
-  const content = readFileSync(absolutePath, "utf-8");
-  const config = yaml.load(content);
+  const content = readFileSync(absolutePath, 'utf-8')
+  const config = yaml.load(content)
 
-  const options = parseConfig(config);
-  options.configPath = absolutePath; // Store for cleanup after publish
+  const options = parseConfig(config)
+  options.configPath = absolutePath // Store for cleanup after publish
 
-  return options;
+  return options
 }
 
 /**
  * Parse command line arguments
  */
 function parseArgs(args) {
-  const options = {};
+  const options = {}
 
   for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-    const nextArg = args[i + 1];
+    const arg = args[i]
+    const nextArg = args[i + 1]
 
     switch (arg) {
-      case "--config":
-      case "-c":
+      case '--config':
+      case '-c': {
         // Load options from config file
-        const configOptions = loadConfigFile(nextArg);
-        Object.assign(options, configOptions);
-        i++;
-        break;
-      case "--file":
-      case "-f":
-        options.file = nextArg;
-        i++;
-        break;
-      case "--dir":
-      case "-d":
-        options.dir = nextArg;
-        i++;
-        break;
-      case "--url":
-      case "-u":
-        options.url = nextArg;
-        i++;
-        break;
-      case "--hub":
-      case "-h":
-        options.hub = nextArg;
-        i++;
-        break;
-      case "--title":
-      case "-t":
-        options.title = nextArg;
-        i++;
-        break;
-      case "--desc":
-        options.desc = nextArg;
-        i++;
-        break;
-      case "--visibility":
-      case "-v":
-        options.visibility = nextArg;
-        i++;
-        break;
-      case "--did":
-        options.did = nextArg;
-        i++;
-        break;
-      case "--new":
-        options.newVibe = true;
-        break;
-      case "--skip-upload":
-        options.skipUpload = true;
-        break;
-      case "--config-stdin":
-        options.configStdin = true;
-        break;
-      case "--help":
-        printHelp();
-        process.exit(0);
-        break;
+        const configOptions = loadConfigFile(nextArg)
+        Object.assign(options, configOptions)
+        i++
+        break
+      }
+      case '--file':
+      case '-f':
+        options.file = nextArg
+        i++
+        break
+      case '--dir':
+      case '-d':
+        options.dir = nextArg
+        i++
+        break
+      case '--url':
+      case '-u':
+        options.url = nextArg
+        i++
+        break
+      case '--hub':
+      case '-h':
+        options.hub = nextArg
+        i++
+        break
+      case '--title':
+      case '-t':
+        options.title = nextArg
+        i++
+        break
+      case '--desc':
+        options.desc = nextArg
+        i++
+        break
+      case '--visibility':
+      case '-v':
+        options.visibility = nextArg
+        i++
+        break
+      case '--did':
+        options.did = nextArg
+        i++
+        break
+      case '--new':
+        options.newVibe = true
+        break
+      case '--skip-upload':
+        options.skipUpload = true
+        break
+      case '--config-stdin':
+        options.configStdin = true
+        break
+      case '--help':
+        printHelp()
+        process.exit(0)
+        break
     }
   }
 
-  return options;
+  return options
 }
 
 /**
@@ -535,14 +538,14 @@ function parseArgs(args) {
  */
 function printHelp() {
   console.log(`
-${chalk.bold("MyVibe Publish")}
+${chalk.bold('MyVibe Publish')}
 
 Publish web content to MyVibe.
 
-${chalk.bold("Usage:")}
+${chalk.bold('Usage:')}
   node publish.mjs [options]
 
-${chalk.bold("Options:")}
+${chalk.bold('Options:')}
   --config, -c <path>     Load options from YAML config file
   --config-stdin          Load options from stdin (JSON format)
   --file, -f <path>       Path to HTML file or ZIP archive
@@ -557,7 +560,7 @@ ${chalk.bold("Options:")}
   --skip-upload           Skip file upload, retry publish action only (requires --did)
   --help                  Show this help message
 
-${chalk.bold("Config File Format (YAML):")}
+${chalk.bold('Config File Format (YAML):')}
   source:
     type: dir
     path: ./dist
@@ -574,7 +577,7 @@ ${chalk.bold("Config File Format (YAML):")}
     categoryTags: [5]
     modelTags: [6]
 
-${chalk.bold("Examples:")}
+${chalk.bold('Examples:')}
   # Publish using config file
   node publish.mjs --config ./publish-config.yaml
 
@@ -589,36 +592,36 @@ ${chalk.bold("Examples:")}
 
   # Import from URL
   node publish.mjs --url https://example.com/app
-`);
+`)
 }
 
 // CLI entry point
 if (isMainModule(import.meta.url)) {
-  const args = process.argv.slice(2);
+  const args = process.argv.slice(2)
 
   if (args.length === 0) {
-    printHelp();
-    process.exit(1);
+    printHelp()
+    process.exit(1)
   }
 
-  const options = parseArgs(args);
+  const options = parseArgs(args)
 
   // Handle --config-stdin asynchronously
-  (async () => {
+  ;(async () => {
     try {
       if (options.configStdin) {
-        const stdinOptions = await loadConfigFromStdin();
-        Object.assign(options, stdinOptions);
-        delete options.configStdin;
+        const stdinOptions = await loadConfigFromStdin()
+        Object.assign(options, stdinOptions)
+        delete options.configStdin
       }
 
-      const result = await publish(options);
-      process.exit(result.success ? 0 : 1);
+      const result = await publish(options)
+      process.exit(result.success ? 0 : 1)
     } catch (error) {
-      console.error(chalk.red(`Fatal error: ${error.message}`));
-      process.exit(1);
+      console.error(chalk.red(`Fatal error: ${error.message}`))
+      process.exit(1)
     }
-  })();
+  })()
 }
 
-export default publish;
+export default publish

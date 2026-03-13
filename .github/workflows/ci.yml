@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install --prefix skills/myvibe-publish/scripts
+
+      - name: Lint
+        run: npm run lint --prefix skills/myvibe-publish/scripts
+
+      - name: Format check
+        run: npm run format --prefix skills/myvibe-publish/scripts
+
+      - name: Test
+        run: npm test --prefix skills/myvibe-publish/scripts
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install --prefix skills/myvibe-publish/scripts
+
+      - name: Dependency audit
+        run: npm audit --prefix skills/myvibe-publish/scripts --audit-level=high
+        continue-on-error: true
+
+      - name: Secret scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          extra_args: --only-verified
