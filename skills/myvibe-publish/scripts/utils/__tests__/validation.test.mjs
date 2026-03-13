@@ -1,10 +1,12 @@
 import { describe, it, expect } from "vitest";
+import { tmpdir } from "node:os";
 import {
   validateHubUrl,
   validateFilePath,
   validateFileSize,
   validateVisibility,
   validateToken,
+  getScreenshotResultPath,
   MAX_UPLOAD_SIZE,
 } from "../constants.mjs";
 
@@ -81,6 +83,14 @@ describe("validateFileSize", () => {
   it("exports MAX_UPLOAD_SIZE as 500MB", () => {
     expect(MAX_UPLOAD_SIZE).toBe(500 * 1024 * 1024);
   });
+
+  it("accepts file at exact limit", () => {
+    expect(() => validateFileSize(MAX_UPLOAD_SIZE)).not.toThrow();
+  });
+
+  it("rejects file one byte over limit", () => {
+    expect(() => validateFileSize(MAX_UPLOAD_SIZE + 1)).toThrow("File too large");
+  });
 });
 
 describe("validateVisibility", () => {
@@ -124,5 +134,21 @@ describe("validateToken", () => {
 
   it("rejects non-string type", () => {
     expect(() => validateToken(12345678901)).toThrow("non-empty string");
+  });
+
+  it("rejects token with control characters", () => {
+    expect(() => validateToken("blocklet-abc\n123def")).toThrow("invalid control characters");
+  });
+
+  it("rejects token with null byte", () => {
+    expect(() => validateToken("blocklet-abc\x00123def")).toThrow("invalid control characters");
+  });
+});
+
+describe("getScreenshotResultPath", () => {
+  it("returns path under os.tmpdir()", () => {
+    const result = getScreenshotResultPath("/some/path");
+    expect(result.startsWith(tmpdir())).toBe(true);
+    expect(result).toMatch(/myvibe-screenshot-[a-f0-9]{8}\.json$/);
   });
 });

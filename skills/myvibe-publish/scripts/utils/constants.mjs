@@ -110,10 +110,19 @@ export function validateHubUrl(hubUrl) {
 export function validateFilePath(filePath) {
   const resolved = resolve(filePath);
   const cwd = process.cwd();
-  if (!resolved.startsWith(cwd)) {
+  if (!resolved.startsWith(cwd + "/") && resolved !== cwd) {
     throw new Error(`Path must be within current working directory: ${filePath}`);
   }
-  return resolved;
+  try {
+    const real = realpathSync(resolved);
+    const realCwd = realpathSync(cwd);
+    if (!real.startsWith(realCwd + "/") && real !== realCwd) {
+      throw new Error(`Path must be within current working directory: ${filePath}`);
+    }
+    return real;
+  } catch {
+    return resolved;
+  }
 }
 
 /**
@@ -152,6 +161,9 @@ export function validateToken(token) {
   }
   if (token.length < 10 || token.length > 1024) {
     throw new Error("Token length must be between 10 and 1024 characters");
+  }
+  if (/[\x00-\x1f\x7f]/.test(token)) {
+    throw new Error("Token contains invalid control characters");
   }
 }
 

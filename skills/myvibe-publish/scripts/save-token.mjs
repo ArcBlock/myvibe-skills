@@ -3,6 +3,7 @@
 // Saves the access credential to ~/.myvibe/myvibe-connected.yaml
 
 import { parseArgs } from "node:util";
+import { validateToken, validateHubUrl } from "./utils/constants.mjs";
 
 const { values } = parseArgs({
   options: {
@@ -16,7 +17,6 @@ if (!values.token) {
   process.exit(1);
 }
 
-const { validateToken, validateHubUrl } = await import("./utils/constants.mjs");
 validateToken(values.token);
 validateHubUrl(values.hub);
 

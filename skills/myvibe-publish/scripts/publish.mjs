@@ -158,11 +158,11 @@ async function publish(options) {
 
       if (dir) {
         // Compress directory first
+        validateFilePath(dir);
         const dirPath = resolve(dir);
         if (!existsSync(dirPath)) {
           throw new Error(`Directory not found: ${dirPath}`);
         }
-        validateFilePath(dir);
         const dirStat = await stat(dirPath);
         if (!dirStat.isDirectory()) {
           throw new Error(`Not a directory: ${dirPath}`);
@@ -173,11 +173,11 @@ async function publish(options) {
         cleanup = zipResult.cleanup;
       } else {
         // Use provided file
+        validateFilePath(file);
         filePath = resolve(file);
         if (!existsSync(filePath)) {
           throw new Error(`File not found: ${filePath}`);
         }
-        validateFilePath(file);
 
         const fileInfo = await getFileInfo(filePath);
         if (fileInfo.type !== "application/zip" && fileInfo.type !== "text/html") {
