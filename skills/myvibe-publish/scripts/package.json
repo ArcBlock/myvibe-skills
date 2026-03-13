@@ -5,7 +5,9 @@
   "description": "Scripts for publishing to MyVibe",
   "main": "publish.mjs",
   "scripts": {
-    "publish": "node publish.mjs"
+    "publish": "node publish.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@aigne/cli": "^1.59.0",
@@ -15,5 +17,8 @@
     "js-yaml": "^4.1.0",
     "open": "^10.1.0",
     "ufo": "^1.5.4"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.0"
   }
 }
