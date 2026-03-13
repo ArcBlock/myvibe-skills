@@ -2,7 +2,8 @@
 
 import { createHash } from "node:crypto";
 import { realpathSync } from "node:fs";
-import { resolve } from "node:path";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // Default MyVibe URL
@@ -157,5 +158,5 @@ export function validateToken(token) {
 export function getScreenshotResultPath(sourcePath) {
   const absolutePath = resolve(sourcePath);
   const hash = createHash("md5").update(absolutePath).digest("hex").slice(0, 8);
-  return `/tmp/myvibe-screenshot-${hash}.json`;
+  return join(tmpdir(), `myvibe-screenshot-${hash}.json`);
 }
