@@ -5,7 +5,7 @@ import crypto from "node:crypto";
 import chalk from "chalk";
 import { joinURL } from "ufo";
 
-import { API_PATHS } from "./constants.mjs";
+import { API_PATHS, validateFileSize } from "./constants.mjs";
 import { handleAuthError } from "./auth.mjs";
 import { getApiBaseUrl } from "./blocklet-info.mjs";
 
@@ -32,6 +32,7 @@ export async function uploadFile(filePath, hubUrl, accessToken, options = {}) {
   // Get file info
   const fileStat = await stat(filePath);
   const fileSize = fileStat.size;
+  validateFileSize(fileSize);
   const fileName = basename(filePath);
   const fileExt = extname(filePath).slice(1).toLowerCase();
 
