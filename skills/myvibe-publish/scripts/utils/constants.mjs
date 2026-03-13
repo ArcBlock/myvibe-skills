@@ -73,6 +73,87 @@ export function isMainModule(metaUrl) {
   }
 }
 
+// --- Validation ---
+
+// Maximum upload file size: 500MB
+export const MAX_UPLOAD_SIZE = 500 * 1024 * 1024;
+
+// SSE connection timeout: 5 minutes
+export const SSE_TIMEOUT = 5 * 60 * 1000;
+
+/**
+ * Validate hub URL - must use HTTPS (localhost http allowed for dev)
+ * @param {string} hubUrl - The hub URL to validate
+ * @returns {URL} - Parsed URL object
+ */
+export function validateHubUrl(hubUrl) {
+  let parsed;
+  try {
+    parsed = new URL(hubUrl);
+  } catch {
+    throw new Error(`Invalid hub URL: ${hubUrl}`);
+  }
+  const isLocalhost =
+    parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1";
+  if (parsed.protocol !== "https:" && !(isLocalhost && parsed.protocol === "http:")) {
+    throw new Error(`Hub URL must use HTTPS: ${hubUrl}`);
+  }
+  return parsed;
+}
+
+/**
+ * Validate file path - must be within current working directory
+ * @param {string} filePath - The file path to validate
+ * @returns {string} - Resolved absolute path
+ */
+export function validateFilePath(filePath) {
+  const resolved = resolve(filePath);
+  const cwd = process.cwd();
+  if (!resolved.startsWith(cwd)) {
+    throw new Error(`Path must be within current working directory: ${filePath}`);
+  }
+  return resolved;
+}
+
+/**
+ * Validate file size against maximum limit
+ * @param {number} fileSize - File size in bytes
+ * @param {number} [maxSize] - Maximum allowed size in bytes
+ */
+export function validateFileSize(fileSize, maxSize = MAX_UPLOAD_SIZE) {
+  if (fileSize > maxSize) {
+    throw new Error(
+      `File too large: ${(fileSize / 1024 / 1024).toFixed(2)}MB exceeds limit of ${(maxSize / 1024 / 1024).toFixed(0)}MB`
+    );
+  }
+}
+
+/**
+ * Validate visibility value
+ * @param {string} visibility - Visibility value
+ */
+export function validateVisibility(visibility) {
+  const allowed = ["public", "private"];
+  if (!allowed.includes(visibility)) {
+    throw new Error(
+      `Invalid visibility: "${visibility}". Must be one of: ${allowed.join(", ")}`
+    );
+  }
+}
+
+/**
+ * Validate token format
+ * @param {string} token - Access token
+ */
+export function validateToken(token) {
+  if (!token || typeof token !== "string") {
+    throw new Error("Token must be a non-empty string");
+  }
+  if (token.length < 10 || token.length > 1024) {
+    throw new Error("Token length must be between 10 and 1024 characters");
+  }
+}
+
 export function getScreenshotResultPath(sourcePath) {
   const absolutePath = resolve(sourcePath);
   const hash = createHash("md5").update(absolutePath).digest("hex").slice(0, 8);
