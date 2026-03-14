@@ -161,8 +161,9 @@ jobs:
           VERSION="${{ steps.version.outputs.version }}"
           git add .claude-plugin/marketplace.json skills/myvibe-publish/scripts/package.json
           git commit -m "chore(release): v${VERSION}"
-          git tag "v${VERSION}"
-          git push origin main --follow-tags
+          git tag -a "v${VERSION}" -m "Release v${VERSION}"
+          git push origin main
+          git push origin "v${VERSION}"
 
       - name: Create GitHub Release
         if: steps.bump.outputs.skip != 'true'
