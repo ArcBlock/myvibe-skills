@@ -1,20 +1,20 @@
-import { readFile, writeFile, mkdir } from "node:fs/promises";
-import { existsSync } from "node:fs";
-import { homedir } from "node:os";
-import { join, dirname } from "node:path";
-import yaml from "js-yaml";
+import { readFile, writeFile, mkdir } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
+import { homedir } from 'node:os'
+import { join } from 'node:path'
+import yaml from 'js-yaml'
 
-import { getApiBaseUrl } from "./blocklet-info.mjs";
+import { getApiBaseUrl } from './blocklet-info.mjs'
 
-const HISTORY_DIR = join(homedir(), ".myvibe");
-const HISTORY_FILE = join(HISTORY_DIR, "published.yaml");
+const HISTORY_DIR = join(homedir(), '.myvibe')
+const HISTORY_FILE = join(HISTORY_DIR, 'published.yaml')
 
 /**
  * Ensure the history directory exists
  */
 async function ensureHistoryDir() {
   if (!existsSync(HISTORY_DIR)) {
-    await mkdir(HISTORY_DIR, { recursive: true });
+    await mkdir(HISTORY_DIR, { recursive: true })
   }
 }
 
@@ -25,13 +25,13 @@ async function ensureHistoryDir() {
 async function loadHistory() {
   try {
     if (!existsSync(HISTORY_FILE)) {
-      return { mappings: {} };
+      return { mappings: {} }
     }
-    const content = await readFile(HISTORY_FILE, "utf-8");
-    const data = yaml.load(content);
-    return data || { mappings: {} };
+    const content = await readFile(HISTORY_FILE, 'utf-8')
+    const data = yaml.load(content)
+    return data || { mappings: {} }
   } catch {
-    return { mappings: {} };
+    return { mappings: {} }
   }
 }
 
@@ -40,9 +40,9 @@ async function loadHistory() {
  * @param {Object} history - History data to save
  */
 async function saveHistory(history) {
-  await ensureHistoryDir();
-  const content = yaml.dump(history, { indent: 2, lineWidth: -1 });
-  await writeFile(HISTORY_FILE, content, "utf-8");
+  await ensureHistoryDir()
+  const content = yaml.dump(history, { indent: 2, lineWidth: -1 })
+  await writeFile(HISTORY_FILE, content, 'utf-8')
 }
 
 /**
@@ -52,25 +52,25 @@ async function saveHistory(history) {
  * @returns {Promise<{did: string, lastPublished: string, title: string} | null>}
  */
 export async function getPublishHistory(sourcePath, hubUrl) {
-  const history = await loadHistory();
-  const hubKey = await getApiBaseUrl(hubUrl);
+  const history = await loadHistory()
+  const hubKey = await getApiBaseUrl(hubUrl)
 
-  const pathMappings = history.mappings[sourcePath];
+  const pathMappings = history.mappings[sourcePath]
   if (!pathMappings) {
-    return null;
+    return null
   }
 
   // Try new key format first, then fallback to legacy origin key
-  let hubMapping = pathMappings[hubKey];
+  let hubMapping = pathMappings[hubKey]
   if (!hubMapping) {
-    const { origin } = new URL(hubUrl);
-    hubMapping = pathMappings[origin];
+    const { origin } = new URL(hubUrl)
+    hubMapping = pathMappings[origin]
   }
   if (!hubMapping) {
-    return null;
+    return null
   }
 
-  return hubMapping;
+  return hubMapping
 }
 
 /**
@@ -80,19 +80,19 @@ export async function getPublishHistory(sourcePath, hubUrl) {
  * @param {string} did - Vibe DID
  * @param {string} title - Vibe title (optional)
  */
-export async function savePublishHistory(sourcePath, hubUrl, did, title = "") {
-  const history = await loadHistory();
-  const hubKey = await getApiBaseUrl(hubUrl);
+export async function savePublishHistory(sourcePath, hubUrl, did, title = '') {
+  const history = await loadHistory()
+  const hubKey = await getApiBaseUrl(hubUrl)
 
   if (!history.mappings[sourcePath]) {
-    history.mappings[sourcePath] = {};
+    history.mappings[sourcePath] = {}
   }
 
   history.mappings[sourcePath][hubKey] = {
     did,
     lastPublished: new Date().toISOString(),
     ...(title && { title }),
-  };
+  }
 
-  await saveHistory(history);
+  await saveHistory(history)
 }

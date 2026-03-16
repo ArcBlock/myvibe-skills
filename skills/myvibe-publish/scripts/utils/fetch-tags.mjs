@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
-import chalk from "chalk";
-import { joinURL } from "ufo";
+import chalk from 'chalk'
+import { joinURL } from 'ufo'
 
-import { VIBE_HUB_URL_DEFAULT, isMainModule } from "./constants.mjs";
-import { getApiBaseUrl } from "./blocklet-info.mjs";
+import { VIBE_HUB_URL_DEFAULT, isMainModule } from './constants.mjs'
+import { getApiBaseUrl } from './blocklet-info.mjs'
 
 // Tag types to fetch
-const TAG_TYPES = ["platform", "tech-stack", "model", "category"];
+const TAG_TYPES = ['platform', 'tech-stack', 'model', 'category']
 
 /**
  * Fetch tags from API
@@ -16,22 +16,22 @@ const TAG_TYPES = ["platform", "tech-stack", "model", "category"];
  * @returns {Promise<Array>} Tags array
  */
 async function fetchTagsByType(hubUrl, type) {
-  const apiBaseUrl = await getApiBaseUrl(hubUrl);
-  const url = joinURL(apiBaseUrl, `/api/tags?type=${type}&isActive=true`);
+  const apiBaseUrl = await getApiBaseUrl(hubUrl)
+  const url = joinURL(apiBaseUrl, `/api/tags?type=${type}&isActive=true`)
 
   const response = await fetch(url, {
-    method: "GET",
+    method: 'GET',
     headers: {
-      Accept: "application/json",
+      Accept: 'application/json',
     },
-  });
+  })
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch ${type} tags: ${response.status} ${response.statusText}`);
+    throw new Error(`Failed to fetch ${type} tags: ${response.status} ${response.statusText}`)
   }
 
-  const result = await response.json();
-  return result.data || [];
+  const result = await response.json()
+  return result.data || []
 }
 
 /**
@@ -40,20 +40,20 @@ async function fetchTagsByType(hubUrl, type) {
  * @returns {Promise<Object>} Tags object by type
  */
 async function fetchAllTags(hubUrl) {
-  const results = await Promise.allSettled(TAG_TYPES.map((type) => fetchTagsByType(hubUrl, type)));
+  const results = await Promise.allSettled(TAG_TYPES.map((type) => fetchTagsByType(hubUrl, type)))
 
-  const tags = {};
+  const tags = {}
   results.forEach((result, index) => {
-    const type = TAG_TYPES[index];
-    if (result.status === "fulfilled") {
-      tags[type] = result.value;
+    const type = TAG_TYPES[index]
+    if (result.status === 'fulfilled') {
+      tags[type] = result.value
     } else {
-      console.error(chalk.yellow(`Warning: Failed to fetch ${type} tags: ${result.reason.message}`));
-      tags[type] = [];
+      console.error(chalk.yellow(`Warning: Failed to fetch ${type} tags: ${result.reason.message}`))
+      tags[type] = []
     }
-  });
+  })
 
-  return tags;
+  return tags
 }
 
 /**
@@ -64,25 +64,25 @@ async function fetchAllTags(hubUrl) {
  * @returns {Promise<Object>} Tags result
  */
 export async function getTags(options = {}) {
-  const { hub = VIBE_HUB_URL_DEFAULT, silent = false } = options;
+  const { hub = VIBE_HUB_URL_DEFAULT, silent = false } = options
 
-  const log = silent ? () => {} : console.error.bind(console);
+  const log = silent ? () => {} : console.error.bind(console)
 
-  log(chalk.cyan(`Fetching tags from ${hub}...`));
+  log(chalk.cyan(`Fetching tags from ${hub}...`))
 
   try {
-    const tags = await fetchAllTags(hub);
+    const tags = await fetchAllTags(hub)
 
     return {
       success: true,
       hub,
       tags,
-    };
+    }
   } catch (error) {
     return {
       success: false,
       error: error.message,
-    };
+    }
   }
 }
 
@@ -90,26 +90,26 @@ export async function getTags(options = {}) {
  * Parse command line arguments
  */
 function parseArgs(args) {
-  const options = {};
+  const options = {}
 
   for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-    const nextArg = args[i + 1];
+    const arg = args[i]
+    const nextArg = args[i + 1]
 
     switch (arg) {
-      case "--hub":
-      case "-h":
-        options.hub = nextArg;
-        i++;
-        break;
-      case "--help":
-        printHelp();
-        process.exit(0);
-        break;
+      case '--hub':
+      case '-h':
+        options.hub = nextArg
+        i++
+        break
+      case '--help':
+        printHelp()
+        process.exit(0)
+        break
     }
   }
 
-  return options;
+  return options
 }
 
 /**
@@ -117,44 +117,44 @@ function parseArgs(args) {
  */
 function printHelp() {
   console.log(`
-${chalk.bold("MyVibe Tags Fetcher")}
+${chalk.bold('MyVibe Tags Fetcher')}
 
 Fetch available tags from MyVibe.
 
-${chalk.bold("Usage:")}
+${chalk.bold('Usage:')}
   node fetch-tags.mjs [options]
 
-${chalk.bold("Options:")}
+${chalk.bold('Options:')}
   --hub, -h <url>    MyVibe URL (default: ${VIBE_HUB_URL_DEFAULT})
   --help             Show this help message
 
-${chalk.bold("Output:")}
+${chalk.bold('Output:')}
   JSON object with tags grouped by type (platform, tech-stack, model, category)
 
-${chalk.bold("Examples:")}
+${chalk.bold('Examples:')}
   # Fetch tags
   node fetch-tags.mjs
 
   # Use specific hub
   node fetch-tags.mjs --hub https://myvibe.example.com
-`);
+`)
 }
 
 // CLI entry point
 if (isMainModule(import.meta.url)) {
-  const args = process.argv.slice(2);
-  const options = parseArgs(args);
+  const args = process.argv.slice(2)
+  const options = parseArgs(args)
 
   getTags({ ...options, silent: false })
     .then((result) => {
       // Output JSON to stdout for AI to parse
-      console.log(JSON.stringify(result, null, 2));
-      process.exit(result.success ? 0 : 1);
+      console.log(JSON.stringify(result, null, 2))
+      process.exit(result.success ? 0 : 1)
     })
     .catch((error) => {
-      console.error(chalk.red(`Fatal error: ${error.message}`));
-      process.exit(1);
-    });
+      console.error(chalk.red(`Fatal error: ${error.message}`))
+      process.exit(1)
+    })
 }
 
-export default getTags;
+export default getTags

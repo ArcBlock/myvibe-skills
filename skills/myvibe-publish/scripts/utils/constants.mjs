@@ -1,20 +1,20 @@
 // MyVibe publish constants
 
-import { createHash } from "node:crypto";
-import { realpathSync } from "node:fs";
-import { resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { createHash } from 'node:crypto'
+import { realpathSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 // Default MyVibe URL
-export const VIBE_HUB_URL_DEFAULT = "https://www.myvibe.so";
+export const VIBE_HUB_URL_DEFAULT = 'https://www.myvibe.so'
 
 // MyVibe blocklet DID (used to resolve mount path via __blocklet__.js)
-export const MYVIBE_BLOCKLET_DID = "z2qa3cy63otaA2A7zHADRichVkSGVyevtYhYQ";
+export const MYVIBE_BLOCKLET_DID = 'z2qa3cy63otaA2A7zHADRichVkSGVyevtYhYQ'
 
 // API endpoints
 export const API_PATHS = {
   // Upload file (HTML or ZIP)
-  UPLOAD: "/api/uploaded-blocklets/upload",
+  UPLOAD: '/api/uploaded-blocklets/upload',
   // Convert uploaded blocklet
   CONVERT: (did) => `/api/uploaded-blocklets/${did}/convert`,
   // Conversion stream (SSE)
@@ -26,28 +26,25 @@ export const API_PATHS = {
   // Get vibe info
   VIBE_INFO: (did) => `/api/vibes/${did}`,
   // Create vibe from URL
-  VIBES_FROM_URL: "/api/vibes/from-url",
-};
+  VIBES_FROM_URL: '/api/vibes/from-url',
+}
 
 // Well-known service path for authorization
-export const WELLKNOWN_SERVICE_PATH = "/.well-known/service";
+export const WELLKNOWN_SERVICE_PATH = '/.well-known/service'
 
 // Authorization timeout (5 minutes)
-export const AUTH_TIMEOUT_MINUTES = 5;
-export const AUTH_FETCH_INTERVAL = 3000; // 3 seconds
-export const AUTH_RETRY_COUNT = (AUTH_TIMEOUT_MINUTES * 60 * 1000) / AUTH_FETCH_INTERVAL;
+export const AUTH_TIMEOUT_MINUTES = 5
+export const AUTH_FETCH_INTERVAL = 3000 // 3 seconds
+export const AUTH_RETRY_COUNT = (AUTH_TIMEOUT_MINUTES * 60 * 1000) / AUTH_FETCH_INTERVAL
 
 // Supported file types
-export const SUPPORTED_ARCHIVE_TYPES = [
-  "application/zip",
-  "application/x-zip-compressed",
-];
+export const SUPPORTED_ARCHIVE_TYPES = ['application/zip', 'application/x-zip-compressed']
 
-export const SUPPORTED_HTML_TYPES = ["text/html"];
+export const SUPPORTED_HTML_TYPES = ['text/html']
 
 // File extensions
-export const ARCHIVE_EXTENSIONS = [".zip"];
-export const HTML_EXTENSIONS = [".html", ".htm"];
+export const ARCHIVE_EXTENSIONS = ['.zip']
+export const HTML_EXTENSIONS = ['.html', '.htm']
 
 // Screenshot result file path (shared between generate-screenshot.mjs and publish.mjs)
 // Uses hash of source path to avoid conflicts in concurrent publishes
@@ -65,16 +62,16 @@ export const HTML_EXTENSIONS = [".html", ".htm"];
  */
 export function isMainModule(metaUrl) {
   try {
-    const scriptPath = fileURLToPath(metaUrl);
-    const argvPath = resolve(process.argv[1]);
-    return realpathSync(scriptPath) === realpathSync(argvPath);
+    const scriptPath = fileURLToPath(metaUrl)
+    const argvPath = resolve(process.argv[1])
+    return realpathSync(scriptPath) === realpathSync(argvPath)
   } catch {
-    return false;
+    return false
   }
 }
 
 export function getScreenshotResultPath(sourcePath) {
-  const absolutePath = resolve(sourcePath);
-  const hash = createHash("md5").update(absolutePath).digest("hex").slice(0, 8);
-  return `/tmp/myvibe-screenshot-${hash}.json`;
+  const absolutePath = resolve(sourcePath)
+  const hash = createHash('md5').update(absolutePath).digest('hex').slice(0, 8)
+  return `/tmp/myvibe-screenshot-${hash}.json`
 }

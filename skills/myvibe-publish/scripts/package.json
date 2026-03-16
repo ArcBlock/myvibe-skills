@@ -5,7 +5,13 @@
   "description": "Scripts for publishing to MyVibe",
   "main": "publish.mjs",
   "scripts": {
-    "publish": "node publish.mjs"
+    "publish": "node publish.mjs",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --check .",
+    "format:fix": "prettier --write ."
   },
   "dependencies": {
     "@aigne/cli": "^1.59.0",
@@ -15,5 +21,13 @@
     "js-yaml": "^4.1.0",
     "open": "^10.1.0",
     "ufo": "^1.5.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.0.3",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.4.0",
+    "prettier": "^3.8.1",
+    "vitest": "^4.1.0"
   }
 }
