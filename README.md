@@ -37,19 +37,22 @@ Auto-detects project type, builds if needed, and deploys seamlessly.
 
 ```mermaid
 flowchart LR
-    A[Detect Project Type] --> B[Build if needed]
-    B --> C[Publish to MyVibe]
+    A[Detect Source] --> B[Clone if repo]
+    B --> C[Detect Project Type]
+    C --> D[Build if needed]
+    D --> E[Publish to MyVibe]
 
-    A -.- A1[Static/Vite/Next.js/Astro]
-    B -.- B1[npm/pnpm/yarn/bun]
-    C -.- C1[Auto metadata & screenshot]
+    C -.- C1[Static/Vite/Next.js/Astro/Remix/SvelteKit/Angular...]
+    D -.- D1[npm/pnpm/yarn/bun/hugo/jekyll]
+    E -.- E1[Auto metadata & screenshot]
 ```
 
 ## Features
 
 | Feature | Description |
 |---------|-------------|
-| **Smart Detection** | Auto-detect Static, Vite, Next.js, Astro, Nuxt, Monorepo |
+| **Git Repo Publish** | Clone and publish directly from a Git repository URL |
+| **Smart Detection** | Auto-detect Static, Vite, Next.js, Astro, Nuxt, Remix, SvelteKit, Angular, Solid.js, Gatsby, Hugo, Jekyll, MkDocs, Docusaurus, Monorepo |
 | **Build Integration** | Supports npm, pnpm, yarn, bun |
 | **Metadata Extraction** | Title, description, tags from HTML/package.json/README |
 | **Version Control** | Auto-track and update existing Vibes |
@@ -111,6 +114,10 @@ Just tell your AI assistant what you want in natural language:
 /myvibe-publish Publish the ./dist.zip file to MyVibe
 ```
 
+```
+/myvibe-publish --repo https://github.com/user/project Publish from Git repo
+```
+
 That's it! The skill handles detection, building, and publishing automatically.
 
 <details>
@@ -127,6 +134,10 @@ You can also pass options explicitly:
 | `--desc <desc>` | | Project description |
 | `--visibility <vis>` | `-v` | Visibility: public or private (default: public) |
 | `--did <did>` | | Vibe DID for version update |
+| `--repo <url>` | `-r` | Git repository URL to clone and publish |
+| `--branch <ref>` | `-b` | Branch, tag, or commit hash |
+| `--path <subdir>` | `-p` | Subdirectory for monorepos |
+| `--git-token <token>` | | Token for private repo HTTPS clone |
 | `--new` | | Force create new Vibe, ignore history |
 
 </details>

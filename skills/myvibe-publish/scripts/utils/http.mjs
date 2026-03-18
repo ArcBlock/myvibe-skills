@@ -1,5 +1,7 @@
-import chalk from "chalk";
-import { handleAuthError } from "./auth.mjs";
+import { handleAuthError } from './auth.mjs'
+import { ERROR_CODES } from './constants.mjs'
+import { createUx } from './ux.mjs'
+import { retry } from './retry.mjs'
 
 /**
  * Make an authenticated API request
@@ -10,48 +12,58 @@ import { handleAuthError } from "./auth.mjs";
  * @returns {Promise<Object>} - Response data
  */
 export async function apiRequest(url, options, accessToken, hubUrl) {
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      ...options.headers,
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
-  });
+  const ux = createUx()
 
-  if (!response.ok) {
-    let errorMessage;
-    let errorCode;
-    try {
-      const errorData = await response.json();
-      errorMessage = errorData.error || errorData.message || response.statusText;
-      errorCode = errorData.code;
-    } catch {
-      errorMessage = response.statusText;
-    }
+  return retry(
+    async () => {
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          ...options.headers,
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      })
 
-    // Handle auth errors specially, but not subscription-related 403s
-    if (response.status === 401 || response.status === 403) {
-      // Don't clear auth for subscription-related errors
-      if (errorCode !== "PRIVATE_MODE_REQUIRES_SUBSCRIPTION") {
-        await handleAuthError(hubUrl, response.status);
+      if (!response.ok) {
+        let errorMessage
+        let errorCode
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.error || errorData.message || response.statusText
+          errorCode = errorData.code
+        } catch {
+          errorMessage = response.statusText
+        }
+
+        // Handle auth errors specially, but not subscription-related 403s
+        if (response.status === 401 || response.status === 403) {
+          if (errorCode !== 'PRIVATE_MODE_REQUIRES_SUBSCRIPTION') {
+            await handleAuthError(hubUrl, response.status)
+          }
+        }
+
+        const error = new Error(errorMessage)
+        error.status = response.status
+        error.code = errorCode
+        error.errorCode = response.status >= 500 ? ERROR_CODES.SERVER_ERROR : ERROR_CODES.NETWORK_ERROR
+        throw error
       }
+
+      return response.json()
+    },
+    {
+      maxRetries: 3,
+      onRetry: (attempt, error) => ux.warn(`API retry ${attempt}/3: ${error.message}`),
     }
-
-    const error = new Error(errorMessage);
-    error.status = response.status;
-    error.code = errorCode;
-    throw error;
-  }
-
-  return response.json();
+  )
 }
 
 /**
  * Make a GET request
  */
 export async function apiGet(url, accessToken, hubUrl) {
-  return apiRequest(url, { method: "GET" }, accessToken, hubUrl);
+  return apiRequest(url, { method: 'GET' }, accessToken, hubUrl)
 }
 
 /**
@@ -61,12 +73,12 @@ export async function apiPost(url, data, accessToken, hubUrl) {
   return apiRequest(
     url,
     {
-      method: "POST",
+      method: 'POST',
       body: JSON.stringify(data),
     },
     accessToken,
     hubUrl
-  );
+  )
 }
 
 /**
@@ -76,12 +88,12 @@ export async function apiPatch(url, data, accessToken, hubUrl) {
   return apiRequest(
     url,
     {
-      method: "PATCH",
+      method: 'PATCH',
       body: JSON.stringify(data),
     },
     accessToken,
     hubUrl
-  );
+  )
 }
 
 /**
@@ -97,82 +109,82 @@ export async function apiPatch(url, data, accessToken, hubUrl) {
  * @returns {Promise<void>}
  */
 export async function subscribeToSSE(url, accessToken, hubUrl, callbacks) {
-  const { onMessage, onProgress, onCompleted, onError } = callbacks;
+  const { onMessage, onProgress, onCompleted, onError } = callbacks
 
   try {
     const response = await fetch(url, {
-      method: "GET",
+      method: 'GET',
       headers: {
         Authorization: `Bearer ${accessToken}`,
-        Accept: "text/event-stream",
-        "Cache-Control": "no-cache",
+        Accept: 'text/event-stream',
+        'Cache-Control': 'no-cache',
       },
-    });
+    })
 
     if (!response.ok) {
       if (response.status === 401 || response.status === 403) {
-        await handleAuthError(hubUrl, response.status);
+        await handleAuthError(hubUrl, response.status)
       }
-      throw new Error(`SSE connection failed: ${response.status} ${response.statusText}`);
+      throw new Error(`SSE connection failed: ${response.status} ${response.statusText}`)
     }
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
 
     while (true) {
-      const { done, value } = await reader.read();
+      const { done, value } = await reader.read()
 
       if (done) {
-        break;
+        break
       }
 
-      buffer += decoder.decode(value, { stream: true });
+      buffer += decoder.decode(value, { stream: true })
 
       // Process complete events in buffer
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || ""; // Keep incomplete line in buffer
+      const lines = buffer.split('\n')
+      buffer = lines.pop() || '' // Keep incomplete line in buffer
 
-      let currentEvent = null;
+      let currentEvent = null
 
       for (const line of lines) {
-        if (line.startsWith("event: ")) {
-          currentEvent = line.slice(7).trim();
-        } else if (line.startsWith("data: ")) {
-          const dataStr = line.slice(6);
+        if (line.startsWith('event: ')) {
+          currentEvent = line.slice(7).trim()
+        } else if (line.startsWith('data: ')) {
+          const dataStr = line.slice(6)
           try {
-            const data = JSON.parse(dataStr);
+            const data = JSON.parse(dataStr)
 
             switch (currentEvent) {
-              case "message":
-                onMessage?.(data.message || data);
-                break;
-              case "progress":
-                onProgress?.(data);
-                break;
-              case "completed":
-                onCompleted?.(data);
-                return; // End stream on completion
-              case "error":
-                onError?.(data.error || data);
-                return; // End stream on error
+              case 'message':
+                onMessage?.(data.message || data)
+                break
+              case 'progress':
+                onProgress?.(data)
+                break
+              case 'completed':
+                onCompleted?.(data)
+                return // End stream on completion
+              case 'error':
+                onError?.(data.error || data)
+                return // End stream on error
               default:
                 // Handle data without event type
                 if (data.message) {
-                  onMessage?.(data.message);
+                  onMessage?.(data.message)
                 }
             }
           } catch {
             // Non-JSON data, treat as message
-            onMessage?.(dataStr);
+            onMessage?.(dataStr)
           }
-          currentEvent = null;
+          currentEvent = null
         }
       }
     }
   } catch (error) {
-    onError?.(error.message || error);
-    throw error;
+    onError?.(error.message || error)
+    throw error
   }
 }
 
@@ -185,45 +197,40 @@ export async function subscribeToSSE(url, accessToken, hubUrl, callbacks) {
  * @param {number} interval - Poll interval in ms
  * @param {number} timeout - Timeout in ms
  */
-export async function pollConversionStatus(
-  url,
-  accessToken,
-  hubUrl,
-  callbacks,
-  interval = 3000,
-  timeout = 300000
-) {
-  const { onProgress, onCompleted, onError } = callbacks;
-  const startTime = Date.now();
+export async function pollConversionStatus(url, accessToken, hubUrl, callbacks, interval = 3000, timeout = 300000) {
+  const { onProgress, onCompleted, onError } = callbacks
+  const startTime = Date.now()
 
   while (Date.now() - startTime < timeout) {
     try {
-      const status = await apiGet(url, accessToken, hubUrl);
+      const status = await apiGet(url, accessToken, hubUrl)
 
-      onProgress?.(status);
+      onProgress?.(status)
 
-      if (status.status === "COMPLETED") {
-        onCompleted?.(status);
-        return;
+      if (status.status === 'COMPLETED') {
+        onCompleted?.(status)
+        return
       }
 
       if (
-        status.status === "FAILED" ||
-        status.status === "FAILED_VALIDATE_BUNDLE" ||
-        status.status === "FAILED_CONVERSION"
+        status.status === 'FAILED' ||
+        status.status === 'FAILED_VALIDATE_BUNDLE' ||
+        status.status === 'FAILED_CONVERSION'
       ) {
-        onError?.(status.conversionError || "Conversion failed");
-        return;
+        onError?.(status.conversionError || 'Conversion failed')
+        return
       }
 
       // Wait before next poll
-      await new Promise((resolve) => setTimeout(resolve, interval));
+      await new Promise((resolve) => setTimeout(resolve, interval))
     } catch (error) {
-      onError?.(error.message || error);
-      throw error;
+      onError?.(error.message || error)
+      throw error
     }
   }
 
-  onError?.("Conversion timeout");
-  throw new Error("Conversion timeout");
+  const error = new Error('Conversion timeout')
+  error.errorCode = ERROR_CODES.CONVERT_TIMEOUT
+  onError?.('Conversion timeout')
+  throw error
 }

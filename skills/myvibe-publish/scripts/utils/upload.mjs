@@ -1,13 +1,30 @@
-import { createReadStream } from "node:fs";
-import { stat } from "node:fs/promises";
-import { basename, extname } from "node:path";
-import crypto from "node:crypto";
-import chalk from "chalk";
-import { joinURL } from "ufo";
+import { stat } from 'node:fs/promises'
+import { open as fsOpen } from 'node:fs/promises'
+import { basename, extname } from 'node:path'
+import crypto from 'node:crypto'
+import { joinURL } from 'ufo'
 
-import { API_PATHS } from "./constants.mjs";
-import { handleAuthError } from "./auth.mjs";
-import { getApiBaseUrl } from "./blocklet-info.mjs";
+import { API_PATHS, ERROR_CODES } from './constants.mjs'
+import { handleAuthError } from './auth.mjs'
+import { getApiBaseUrl } from './blocklet-info.mjs'
+import { createUx, formatBytes } from './ux.mjs'
+import { retry } from './retry.mjs'
+
+const CHUNK_SIZE = 256 * 1024 // 256KB
+
+/**
+ * Read a chunk of a file at a given offset
+ */
+async function readChunk(filePath, offset, size) {
+  const handle = await fsOpen(filePath, 'r')
+  try {
+    const buffer = Buffer.alloc(size)
+    const { bytesRead } = await handle.read(buffer, 0, size, offset)
+    return buffer.subarray(0, bytesRead)
+  } finally {
+    await handle.close()
+  }
+}
 
 /**
  * Upload a file to MyVibe using TUS protocol
@@ -19,39 +36,40 @@ import { getApiBaseUrl } from "./blocklet-info.mjs";
  * @returns {Promise<{did: string, id: string, status: string}>} - Upload result
  */
 export async function uploadFile(filePath, hubUrl, accessToken, options = {}) {
-  const { did } = options;
-  const { origin } = new URL(hubUrl);
-  const apiBaseUrl = await getApiBaseUrl(hubUrl);
+  const ux = createUx()
+  const { did } = options
+  const { origin } = new URL(hubUrl)
+  const apiBaseUrl = await getApiBaseUrl(hubUrl)
 
   // Build upload endpoint with optional did query parameter
-  let uploadEndpoint = joinURL(apiBaseUrl, API_PATHS.UPLOAD);
+  let uploadEndpoint = joinURL(apiBaseUrl, API_PATHS.UPLOAD)
   if (did) {
-    uploadEndpoint = `${uploadEndpoint}?did=${encodeURIComponent(did)}`;
+    uploadEndpoint = `${uploadEndpoint}?did=${encodeURIComponent(did)}`
   }
 
   // Get file info
-  const fileStat = await stat(filePath);
-  const fileSize = fileStat.size;
-  const fileName = basename(filePath);
-  const fileExt = extname(filePath).slice(1).toLowerCase();
+  const fileStat = await stat(filePath)
+  const fileSize = fileStat.size
+  const fileName = basename(filePath)
+  const fileExt = extname(filePath).slice(1).toLowerCase()
 
   // Determine MIME type
-  let mimeType = "application/octet-stream";
-  if (fileExt === "zip") {
-    mimeType = "application/zip";
-  } else if (fileExt === "html" || fileExt === "htm") {
-    mimeType = "text/html";
+  let mimeType = 'application/octet-stream'
+  if (fileExt === 'zip') {
+    mimeType = 'application/zip'
+  } else if (fileExt === 'html' || fileExt === 'htm') {
+    mimeType = 'text/html'
   }
 
   // Generate file ID
-  const fileHash = crypto.randomBytes(16).toString("hex");
-  const uploaderId = "MyVibePublish";
-  const fileId = `${uploaderId}-${fileHash}`;
+  const fileHash = crypto.randomBytes(16).toString('hex')
+  const uploaderId = 'MyVibePublish'
+  const fileId = `${uploaderId}-${fileHash}`
 
-  console.log(chalk.cyan(`\nUploading: ${fileName} (${(fileSize / 1024).toFixed(2)} KB)`));
+  ux.step(`Uploading: ${fileName} (${formatBytes(fileSize)})`)
 
   // Use random hash prefix to avoid filename collision
-  const uniqueFileName = `${fileHash.slice(0, 8)}-${fileName}`;
+  const uniqueFileName = `${fileHash.slice(0, 8)}-${fileName}`
 
   // TUS metadata
   const tusMetadata = {
@@ -61,105 +79,141 @@ export async function uploadFile(filePath, hubUrl, accessToken, options = {}) {
     type: mimeType,
     filetype: mimeType,
     filename: uniqueFileName,
-  };
+  }
 
   const encodedMetadata = Object.entries(tusMetadata)
-    .map(([key, value]) => `${key} ${Buffer.from(String(value)).toString("base64")}`)
-    .join(",");
+    .map(([key, value]) => `${key} ${Buffer.from(String(value)).toString('base64')}`)
+    .join(',')
 
-  const endpointPath = new URL(uploadEndpoint).pathname;
+  const endpointPath = new URL(uploadEndpoint).pathname
 
-  // Step 1: Create upload
-  const createResponse = await fetch(uploadEndpoint, {
-    method: "POST",
-    headers: {
-      "Tus-Resumable": "1.0.0",
-      "Upload-Length": fileSize.toString(),
-      "Upload-Metadata": encodedMetadata,
-      Authorization: `Bearer ${accessToken}`,
-      "x-uploader-file-name": uniqueFileName,
-      "x-uploader-file-id": fileId,
-      "x-uploader-file-ext": fileExt,
-      "x-uploader-base-url": endpointPath,
-      "x-uploader-endpoint-url": uploadEndpoint,
-      "x-uploader-metadata": JSON.stringify({
-        uploaderId,
-        relativePath: uniqueFileName,
-        name: uniqueFileName,
-        type: mimeType,
-      }),
+  // Step 1: Create upload (with retry)
+  const createResponse = await retry(
+    async () => {
+      const resp = await fetch(uploadEndpoint, {
+        method: 'POST',
+        headers: {
+          'Tus-Resumable': '1.0.0',
+          'Upload-Length': fileSize.toString(),
+          'Upload-Metadata': encodedMetadata,
+          Authorization: `Bearer ${accessToken}`,
+          'x-uploader-file-name': uniqueFileName,
+          'x-uploader-file-id': fileId,
+          'x-uploader-file-ext': fileExt,
+          'x-uploader-base-url': endpointPath,
+          'x-uploader-endpoint-url': uploadEndpoint,
+          'x-uploader-metadata': JSON.stringify({
+            uploaderId,
+            relativePath: uniqueFileName,
+            name: uniqueFileName,
+            type: mimeType,
+          }),
+        },
+      })
+
+      if (!resp.ok) {
+        if (resp.status === 401 || resp.status === 403) {
+          await handleAuthError(hubUrl, resp.status)
+        }
+        const errorText = await resp.text()
+        const err = new Error(`Failed to create upload: ${resp.status} ${resp.statusText}\n${errorText}`)
+        err.status = resp.status
+        err.errorCode = ERROR_CODES.UPLOAD_FAILED
+        throw err
+      }
+      return resp
     },
-  });
-
-  if (!createResponse.ok) {
-    if (createResponse.status === 401 || createResponse.status === 403) {
-      await handleAuthError(hubUrl, createResponse.status);
+    {
+      maxRetries: 3,
+      onRetry: (attempt, error) => ux.warn(`Upload create retry ${attempt}/3: ${error.message}`),
     }
-    const errorText = await createResponse.text();
-    throw new Error(`Failed to create upload: ${createResponse.status} ${createResponse.statusText}\n${errorText}`);
-  }
+  )
 
-  const uploadUrl = createResponse.headers.get("Location");
+  const uploadUrl = createResponse.headers.get('Location')
   if (!uploadUrl) {
-    throw new Error("No upload URL received from server");
+    throw new Error('No upload URL received from server')
   }
-  console.log(chalk.gray(`  Upload URL: ${uploadUrl}`));
+  ux.info(`Upload URL: ${uploadUrl}`)
+  ux.info('Upload created, sending file data...')
 
-  console.log(chalk.gray("  Upload created, sending file data..."));
+  // Step 2: Upload file content in chunks with progress
+  const fullUploadUrl = `${origin}${uploadUrl}`
+  let offset = 0
+  let lastResponse
 
-  // Step 2: Read file and upload content
-  const fileBuffer = await readFileAsBuffer(filePath);
+  while (offset < fileSize) {
+    const chunkEnd = Math.min(offset + CHUNK_SIZE, fileSize)
+    const chunk = await readChunk(filePath, offset, chunkEnd - offset)
 
-  const uploadResponse = await fetch(`${origin}${uploadUrl}`, {
-    method: "PATCH",
-    headers: {
-      "Tus-Resumable": "1.0.0",
-      "Upload-Offset": "0",
-      "Content-Type": "application/offset+octet-stream",
-      Authorization: `Bearer ${accessToken}`,
-      "x-uploader-file-name": uniqueFileName,
-      "x-uploader-file-id": fileId,
-      "x-uploader-file-ext": fileExt,
-      "x-uploader-base-url": endpointPath,
-      "x-uploader-endpoint-url": uploadEndpoint,
-      "x-uploader-metadata": JSON.stringify({
-        uploaderId,
-        relativePath: uniqueFileName,
-        name: uniqueFileName,
-        type: mimeType,
-      }),
-      "x-uploader-file-exist": "true",
-    },
-    body: fileBuffer,
-  });
+    lastResponse = await retry(
+      async () => {
+        const resp = await fetch(fullUploadUrl, {
+          method: 'PATCH',
+          headers: {
+            'Tus-Resumable': '1.0.0',
+            'Upload-Offset': offset.toString(),
+            'Content-Type': 'application/offset+octet-stream',
+            Authorization: `Bearer ${accessToken}`,
+            'x-uploader-file-name': uniqueFileName,
+            'x-uploader-file-id': fileId,
+            'x-uploader-file-ext': fileExt,
+            'x-uploader-base-url': endpointPath,
+            'x-uploader-endpoint-url': uploadEndpoint,
+            'x-uploader-metadata': JSON.stringify({
+              uploaderId,
+              relativePath: uniqueFileName,
+              name: uniqueFileName,
+              type: mimeType,
+            }),
+            'x-uploader-file-exist': 'true',
+          },
+          body: chunk,
+        })
+        if (!resp.ok) {
+          if (resp.status === 401 || resp.status === 403) {
+            await handleAuthError(hubUrl, resp.status)
+          }
+          const errorText = await resp.text()
+          const err = new Error(`Failed to upload chunk: ${resp.status} ${resp.statusText}\n${errorText}`)
+          err.status = resp.status
+          err.errorCode = ERROR_CODES.UPLOAD_FAILED
+          throw err
+        }
+        return resp
+      },
+      {
+        maxRetries: 3,
+        onRetry: (attempt, error) => ux.warn(`Upload retry ${attempt}/3: ${error.message}`),
+      }
+    )
 
-  if (!uploadResponse.ok) {
-    if (uploadResponse.status === 401 || uploadResponse.status === 403) {
-      await handleAuthError(hubUrl, uploadResponse.status);
+    offset = chunkEnd
+    if (fileSize > CHUNK_SIZE) {
+      ux.progress('upload', Math.round((offset / fileSize) * 100), `${formatBytes(offset)}/${formatBytes(fileSize)}`)
     }
-    const errorText = await uploadResponse.text();
-    throw new Error(`Failed to upload file: ${uploadResponse.status} ${uploadResponse.statusText}\n${errorText}`);
   }
 
-  let result;
+  let result
   try {
-    result = await uploadResponse.json();
+    result = await lastResponse.json()
   } catch {
-    throw new Error("Invalid response from server after upload");
+    throw new Error('Invalid response from server after upload')
   }
 
   // Check for upload errors
   if (result.error) {
-    throw new Error(`Upload error: ${result.error.code || result.error.message || JSON.stringify(result.error)}`);
+    const err = new Error(`Upload error: ${result.error.code || result.error.message || JSON.stringify(result.error)}`)
+    err.errorCode = ERROR_CODES.UPLOAD_FAILED
+    throw err
   }
 
   // Extract blocklet info from result
-  const blocklet = result.blocklet;
+  const blocklet = result.blocklet
   if (!blocklet) {
-    throw new Error("No blocklet info in upload response");
+    throw new Error('No blocklet info in upload response')
   }
 
-  console.log(chalk.green(`✅ Upload complete! DID: ${blocklet.did}`));
+  ux.success(`Upload complete! DID: ${blocklet.did}`)
 
   return {
     did: blocklet.did,
@@ -167,23 +221,7 @@ export async function uploadFile(filePath, hubUrl, accessToken, options = {}) {
     status: blocklet.status,
     isNewUpload: blocklet.isNewUpload,
     versionHistoryEnabled: blocklet.versionHistoryEnabled,
-  };
-}
-
-/**
- * Read file as buffer
- * @param {string} filePath - File path
- * @returns {Promise<Buffer>}
- */
-async function readFileAsBuffer(filePath) {
-  const chunks = [];
-  const stream = createReadStream(filePath);
-
-  return new Promise((resolve, reject) => {
-    stream.on("data", (chunk) => chunks.push(chunk));
-    stream.on("end", () => resolve(Buffer.concat(chunks)));
-    stream.on("error", reject);
-  });
+  }
 }
 
 /**
@@ -191,52 +229,54 @@ async function readFileAsBuffer(filePath) {
  * @param {string} url - URL to import
  * @param {string} hubUrl - MyVibe URL
  * @param {string} accessToken - Access token
- * @param {Object} metadata - Vibe metadata
  * @returns {Promise<{did: string, id: string}>}
  */
-export async function createVibeFromUrl(url, hubUrl, accessToken, metadata = {}) {
-  const apiBaseUrl = await getApiBaseUrl(hubUrl);
-  const apiUrl = joinURL(apiBaseUrl, API_PATHS.VIBES_FROM_URL);
+export async function createVibeFromUrl(url, hubUrl, accessToken) {
+  const ux = createUx()
+  const apiBaseUrl = await getApiBaseUrl(hubUrl)
+  const apiUrl = joinURL(apiBaseUrl, API_PATHS.VIBES_FROM_URL)
 
-  console.log(chalk.cyan(`\nImporting URL: ${url}`));
+  ux.step(`Importing URL: ${url}`)
 
   const response = await fetch(apiUrl, {
-    method: "POST",
+    method: 'POST',
     headers: {
       Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       url,
     }),
-  });
+  })
 
   if (!response.ok) {
     if (response.status === 401 || response.status === 403) {
-      await handleAuthError(hubUrl, response.status);
+      await handleAuthError(hubUrl, response.status)
     }
-    let errorMessage;
+    let errorMessage
     try {
-      const errorData = await response.json();
-      errorMessage = errorData.error || errorData.message || response.statusText;
+      const errorData = await response.json()
+      errorMessage = errorData.error || errorData.message || response.statusText
     } catch {
-      errorMessage = response.statusText;
+      errorMessage = response.statusText
     }
-    throw new Error(`Failed to create vibe from URL: ${errorMessage}`);
+    const err = new Error(`Failed to create vibe from URL: ${errorMessage}`)
+    err.errorCode = ERROR_CODES.UPLOAD_FAILED
+    throw err
   }
 
-  const result = await response.json();
-  const blocklet = result.blocklet;
+  const result = await response.json()
+  const blocklet = result.blocklet
 
   if (!blocklet || !blocklet.did) {
-    throw new Error("No blocklet info in response");
+    throw new Error('No blocklet info in response')
   }
 
-  console.log(chalk.green(`✅ Vibe created! DID: ${blocklet.did}`));
+  ux.success(`Vibe created! DID: ${blocklet.did}`)
 
   return {
     did: blocklet.did,
     id: blocklet.id,
     status: blocklet.status,
-  };
+  }
 }

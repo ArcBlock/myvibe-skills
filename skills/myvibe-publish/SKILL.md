@@ -22,6 +22,9 @@ Publish web content (HTML file, ZIP archive, or directory) to MyVibe.
 /myvibe:myvibe-publish --url https://example.com/app  # Import from URL
 /myvibe:myvibe-publish --dir ./dist --new     # Force new Vibe
 /myvibe:myvibe-publish --dir ./dist --did z2qaXXX    # Update specific Vibe
+/myvibe:myvibe-publish --repo https://github.com/user/project   # Clone and publish
+/myvibe:myvibe-publish --repo https://github.com/user/project --branch v2.0  # Specific branch
+/myvibe:myvibe-publish --repo https://github.com/user/project --path packages/web  # Monorepo subdir
 ```
 
 ## Options
@@ -37,6 +40,10 @@ Publish web content (HTML file, ZIP archive, or directory) to MyVibe.
 | `--visibility <vis>` | `-v` | Visibility: public or private (default: public) |
 | `--did <did>` | | Vibe DID for version update (overrides auto-detection) |
 | `--new` | | Force create new Vibe, ignore publish history |
+| `--repo <url>` | `-r` | Git repository URL to clone and publish |
+| `--branch <ref>` | `-b` | Branch, tag, or commit (default: repo default) |
+| `--path <subdir>` | `-p` | Subdirectory within repo (for monorepos) |
+| `--git-token <token>` | | Token for HTTPS clone of private repos |
 
 ## Pre-authorized Credential
 
@@ -54,6 +61,7 @@ If the user's message contains a credential, always extract and save it in this 
 
 ## Workflow Overview
 
+0. **Resolve Source** → if `--repo`, clone repository first
 1. **Detect Project Type** → if no build needed, start screenshot in background
 2. **Build** (if needed) → then start screenshot in background
 3. **Metadata Analysis** → extract title, description, tags
@@ -71,15 +79,44 @@ After dependencies are confirmed, fetch tags:
 
 ---
 
+## Step 0: Resolve Source
+
+If `--repo` is provided, clone the repository before proceeding:
+
+1. Run clone-repo script:
+   ```bash
+   node {skill_path}/scripts/utils/clone-repo.mjs --repo <url> [--branch <ref>] [--path <subdir>] [--git-token <token>]
+   ```
+2. Use the `clonePath` from the JSON output as the `--dir` for all subsequent steps
+3. The repo's `origin` URL can be used as `githubRepo` in metadata (Step 3)
+4. Continue to Step 1 with the cloned directory
+
+If `--repo` is NOT provided, skip directly to Step 1.
+
+---
+
 ## Step 1: Detect Project Type
 
-| Check | Project Type | Next Step |
-|-------|-------------|-----------|
-| `--file` with HTML/ZIP | **Single File** | → Start screenshot, then Step 3 |
-| Has `dist/`, `build/`, or `out/` with index.html | **Pre-built** | → Step 2 (confirm rebuild) |
-| Has `package.json` with build script, no output | **Buildable** | → Step 2 (build first) |
-| Multiple `package.json` or workspace config | **Monorepo** | → Step 2 (select app) |
-| Has `index.html` at root, no `package.json` | **Static** | → Start screenshot, then Step 3 |
+| Check | Project Type | Build Command | Output Dir | Next Step |
+|-------|-------------|---------------|------------|-----------|
+| `--file` with HTML/ZIP | **Single File** | — | — | → Start screenshot, then Step 3 |
+| Has `index.html` at root, no `package.json` | **Static** | — | — | → Start screenshot, then Step 3 |
+| Has `dist/`, `build/`, or `out/` with index.html | **Pre-built** | — | — | → Step 2 (confirm rebuild) |
+| `vite.config.*` or deps contain `vite` | **Vite** | `npm run build` | `dist` | → Step 2 |
+| `next.config.*` or deps contain `next` | **Next.js** | `npm run build` | `out` (static export) | → Step 2 |
+| `astro.config.*` or deps contain `astro` | **Astro** | `npm run build` | `dist` | → Step 2 |
+| `nuxt.config.*` or deps contain `nuxt` | **Nuxt** | `npm run build` then `npm run generate` | `.output/public` | → Step 2 |
+| `remix.config.*` or deps contain `@remix-run/*` | **Remix** | `npm run build` | `build/client` | → Step 2 |
+| `svelte.config.*` or deps contain `@sveltejs/kit` | **SvelteKit** | `npm run build` | `build` | → Step 2 |
+| `angular.json` or deps contain `@angular/core` | **Angular** | `npm run build` | `dist/<project-name>` | → Step 2 |
+| deps contain `solid-start` or `solid-js` + `vite` | **Solid.js** | `npm run build` | `dist` | → Step 2 |
+| `gatsby-config.*` or deps contain `gatsby` | **Gatsby** | `npm run build` | `public` | → Step 2 |
+| `hugo.toml/yaml/json` or `content/` + `layouts/` | **Hugo** | `hugo` | `public` | → Step 2 |
+| `_config.yml` + Gemfile contains `jekyll` | **Jekyll** | `bundle exec jekyll build` | `_site` | → Step 2 |
+| `mkdocs.yml` | **MkDocs** | `mkdocs build` | `site` | → Step 2 |
+| `docusaurus.config.*` or deps contain `@docusaurus/core` | **Docusaurus** | `npm run build` | `build` | → Step 2 |
+| Multiple `package.json` or workspace config | **Monorepo** | varies | varies | → Step 2 (select app) |
+| Has `package.json` with `build` script (no match above) | **Generic Buildable** | `npm run build` | check `dist/`, `build/`, `out/`, `public/` | → Step 2 |
 
 **Start screenshot for non-build projects** (run_in_background: true):
 
@@ -216,6 +253,23 @@ node {skill_path}/scripts/publish.mjs --config-stdin <<'EOF'
 EOF
 ```
 
+For repo source:
+
+```bash
+node {skill_path}/scripts/publish.mjs --config-stdin <<'EOF'
+{
+  "source": { "type": "repo", "url": "https://github.com/user/project", "branch": "main", "path": "packages/app" },
+  "hub": "https://www.myvibe.so",
+  "metadata": {
+    "title": "My App",
+    "description": "Story description here",
+    "visibility": "public",
+    "githubRepo": "https://github.com/user/project"
+  }
+}
+EOF
+```
+
 - `did` optional - for explicit version updates
 - `coverImage` auto-read from `/tmp/myvibe-screenshot-{hash}.json`
 - Screenshot result file cleaned up after publish
@@ -280,6 +334,10 @@ The script prints an upgrade prompt when updating an existing Vibe without versi
 | Script execution failed (network/sandbox) | Check if network permissions are enabled. Add `sandbox_permissions=require_escalated` and retry |
 | Publish action failed (upload succeeded) | Use `skipUpload: true` with DID from error output to retry action only |
 | Auth timeout in cloud agent | Ask user to get a publish prompt from https://www.myvibe.so/openclaw |
+| Git clone failed | Check repository URL and network connection |
+| Git auth failed | Use --git-token for private HTTPS repos, or configure SSH keys |
+| Git not installed | Install git and retry |
+| Subdirectory not found | Verify --path exists in the repository |
 | Private mode is only available for Creator and Studio users | See "Private Mode Error Handling" below |
 
 ### Private Mode Error Handling
