@@ -159,6 +159,21 @@ Skill 会自动检测需要构建的项目（Vite、Next.js、Astro 等），并
 
 </details>
 
+## 维护者工作流
+
+仓库级维护工作从根目录执行，但发布 Skill 的实现边界仍在 `skills/myvibe-publish/scripts/`。根目录的 `package.json` 是维护者入口层：它会为该实现目录安装依赖，并提供统一的校验与格式化命令。
+
+请在仓库根目录运行：
+
+```bash
+npm install
+npm run lint
+npm test
+npm run format
+```
+
+设计文档现在位于 `docs/superpowers/specs/`，实现计划位于 `docs/superpowers/plans/`。较早的混合规划文档仍保留在 `docs/plans/` 中，供历史参考。
+
 ## 参与贡献
 
 欢迎贡献！请提交 [Issue](https://github.com/ArcBlock/myvibe-skills/issues) 或 Pull Request。

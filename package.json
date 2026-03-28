@@ -1,0 +1,17 @@
+{
+  "name": "myvibe-skills",
+  "private": true,
+  "description": "Repository maintenance tooling for myvibe-skills",
+  "scripts": {
+    "postinstall": "npm --prefix skills/myvibe-publish/scripts install --no-audit --no-fund --no-package-lock",
+    "lint": "npm --prefix skills/myvibe-publish/scripts run lint",
+    "lint:fix": "npm --prefix skills/myvibe-publish/scripts run lint:fix",
+    "test": "npm --prefix skills/myvibe-publish/scripts run test",
+    "format": "npm --prefix skills/myvibe-publish/scripts run format"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.4.0"
+  }
+}

@@ -81,6 +81,14 @@ After dependencies are confirmed, fetch tags:
 | Multiple `package.json` or workspace config | **Monorepo** | → Step 2 (select app) |
 | Has `index.html` at root, no `package.json` | **Static** | → Start screenshot, then Step 3 |
 
+For **Buildable** and **Pre-built** projects, refine the coarse class with framework-aware detection when the evidence is clear:
+- **Vite**: `vite.config.*`, or `vite` plus a build script and root `index.html`
+- **Next.js**: `next.config.*` or `next`; treat `.next/` as supporting evidence only, and only treat `out/index.html` as publishable pre-built output
+- **Astro**: `astro.config.*` or `astro`
+- **Nuxt**: `nuxt.config.*` or `nuxt`; only treat it as pre-built when a publishable static output actually exists, such as `.output/public/index.html`
+
+For **Monorepo**, keep the outer project classified as monorepo. After the user selects an app, re-run the same detection on that selected app to refine its framework identity.
+
 **Start screenshot for non-build projects** (run_in_background: true):
 
 For directory source (`--dir`):
